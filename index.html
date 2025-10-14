@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accueil - Portefeuille Digital</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --primary-dark: #2980b9;
+            --secondary-color: #2ecc71;
+            --accent-color: #9b59b6;
+            --background-color: #f8fafc;
+            --text-color: #2d3748;
+            --text-light: #718096;
+            --border-radius: 16px;
+            --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: var(--gradient-primary);
+            color: white;
+            border-radius: var(--border-radius);
+            margin-bottom: 40px;
+            box-shadow: var(--box-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" fill="%23ffffff" opacity="0.1"><polygon points="1000,100 1000,0 0,100"/></svg>');
+            background-size: cover;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+            position: relative;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .logo {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .logo i {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 50px;
+        }
+
+        .welcome-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 40px;
+            box-shadow: var(--box-shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .welcome-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .welcome-card h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .welcome-card h2 i {
+            color: var(--primary-color);
+        }
+
+        .welcome-card p {
+            margin-bottom: 20px;
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        .features-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 40px;
+            box-shadow: var(--box-shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .features-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .features-card h2 {
+            font-size: 2rem;
+            margin-bottom: 25px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .features-card h2 i {
+            color: var(--secondary-color);
+        }
+
+        .features-list {
+            list-style: none;
+        }
+
+        .features-list li {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .features-list li:hover {
+            background: #f8fafc;
+            transform: translateX(5px);
+        }
+
+        .features-list i {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .feature-1 i { background: var(--gradient-primary); }
+        .feature-2 i { background: var(--gradient-secondary); }
+        .feature-3 i { background: var(--gradient-accent); }
+        .feature-4 i { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+        .feature-content h3 {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            color: var(--text-color);
+        }
+
+        .feature-content p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .apps-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .app-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 40px;
+            box-shadow: var(--box-shadow);
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .app-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .app-card.portefeuille {
+            border-color: var(--primary-color);
+        }
+
+        .app-card.carte {
+            border-color: var(--accent-color);
+        }
+
+        .app-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            font-size: 2.5rem;
+            color: white;
+        }
+
+        .portefeuille .app-icon {
+            background: var(--gradient-primary);
+        }
+
+        .carte .app-icon {
+            background: var(--gradient-accent);
+        }
+
+        .app-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+
+        .app-card p {
+            color: var(--text-light);
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+        }
+
+        .btn-accent {
+            background: var(--gradient-accent);
+        }
+
+        .btn-large {
+            padding: 18px 40px;
+            font-size: 1.2rem;
+        }
+
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            text-align: center;
+            box-shadow: var(--box-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+
+        .stat-card p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .cta-section {
+            text-align: center;
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 50px;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 40px;
+        }
+
+        .cta-section h2 {
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
+        .cta-section p {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-light);
+            border-top: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content, .apps-section {
+                grid-template-columns: 1fr;
+            }
+            
+            header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .welcome-card, .features-card, .app-card {
+                padding: 30px 25px;
+            }
+            
+            .cta-section {
+                padding: 40px 25px;
+            }
+            
+            .btn-large {
+                padding: 16px 30px;
+                font-size: 1.1rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .button-group .btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 30px 20px;
+            }
+            
+            header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .welcome-card h2, .features-card h2 {
+                font-size: 1.6rem;
+            }
+            
+            .cta-section h2 {
+                font-size: 1.8rem;
+            }
+
+            .app-card h3 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <h1>Portefeuille Digital Intelligent</h1>
+            <p>Votre solution complète pour la gestion financière et les paiements digitaux</p>
+        </header>
+
+        <div class="main-content">
+            <div class="welcome-card">
+                <h2><i class="fas fa-handshake"></i> Bienvenue</h2>
+                <p>Découvrez notre écosystème financier digital, conçu spécialement pour vous aider à prendre le contrôle complet de vos finances personnelles.</p>
+                <p>Avec une interface intuitive et des fonctionnalités puissantes, vous pouvez désormais gérer votre budget, suivre vos transactions et effectuer des paiements en toute sécurité.</p>
+                <p>Que vous soyez étudiant, professionnel ou chef de famille, nos applications s'adaptent à vos besoins pour une gestion financière optimale.</p>
+            </div>
+
+            <div class="features-card">
+                <h2><i class="fas fa-star"></i> Fonctionnalités</h2>
+                <ul class="features-list">
+                    <li class="feature-1">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <div class="feature-content">
+                            <h3>Gestion complète des finances</h3>
+                            <p>Suivez vos revenus, dépenses, dettes et argent de poche en temps réel</p>
+                        </div>
+                    </li>
+                    <li class="feature-2">
+                        <i class="fas fa-credit-card"></i>
+                        <div class="feature-content">
+                            <h3>Carte virtuelle sécurisée</h3>
+                            <p>Effectuez des paiements en ligne en toute sécurité avec votre carte digitale</p>
+                        </div>
+                    </li>
+                    <li class="feature-3">
+                        <i class="fas fa-chart-pie"></i>
+                        <div class="feature-content">
+                            <h3>Analyses détaillées</h3>
+                            <p>Visualisez vos données avec des graphiques interactifs et des rapports</p>
+                        </div>
+                    </li>
+                    <li class="feature-4">
+                        <i class="fas fa-shield-alt"></i>
+                        <div class="feature-content">
+                            <h3>Sécurisé et privé</h3>
+                            <p>Vos données sont sauvegardées localement et protégées par authentification</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="apps-section">
+            <div class="app-card portefeuille">
+                <div class="app-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <h3>Portefeuille Digital</h3>
+                <p>Application complète de gestion financière avec suivi des dépenses, analyses détaillées et rapports automatiques. Idéal pour contrôler votre budget au quotidien.</p>
+                <a href="portefeuille.html" class="btn btn-primary btn-large">
+                    <i class="fas fa-rocket"></i>
+                    Accéder au Portefeuille
+                </a>
+            </div>
+
+            <div class="app-card carte">
+                <div class="app-icon">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <h3>Carte Virtuelle</h3>
+                <p>Carte de paiement digitale sécurisée pour effectuer vos achats en ligne. Génération instantanée, sécurité renforcée et gestion simplifiée de vos moyens de paiement.</p>
+                <a href="carte.html" class="btn btn-accent btn-large">
+                    <i class="fas fa-credit-card"></i>
+                    Voir Ma Carte
+                </a>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <div class="stat-card">
+                <i class="fas fa-credit-card"></i>
+                <h3>Argent Chargé</h3>
+                <p>Gérez vos revenus principaux et suivez vos entrées d'argent</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-shopping-cart"></i>
+                <h3>Dépenses</h3>
+                <p>Catégorisez et analysez vos dépenses pour mieux contrôler votre budget</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-hand-holding-usd"></i>
+                <h3>Dettes</h3>
+                <p>Suivez vos dettes et créances avec dates d'échéance</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-coins"></i>
+                <h3>Argent de Poche</h3>
+                <p>Enregistrez vos revenus supplémentaires et cadeaux</p>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <h2>Prêt à révolutionner votre gestion financière ?</h2>
+            <p>Choisissez l'application qui correspond à vos besoins et commencez à gérer votre argent efficacement dès aujourd'hui.</p>
+            <div class="button-group">
+                <a href="portefeuille.html" class="btn btn-primary btn-large">
+                    <i class="fas fa-wallet"></i>
+                    Portefeuille Digital
+                </a>
+                <a href="carte.html" class="btn btn-accent btn-large">
+                    <i class="fas fa-credit-card"></i>
+                    Carte Virtuelle
+                </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>Portefeuille Digital Intelligent &copy; 2023 - Développé avec <i class="fas fa-heart" style="color: #e74c3c;"></i> pour une meilleure gestion financière</p>
+        </footer>
+    </div>
+</body>
+</html>
