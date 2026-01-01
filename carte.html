@@ -1221,7 +1221,7 @@
                 </div>
                 <div class="info-row">
                     <div class="info-label">Téléphone:</div>
-                    <div id="account-phone">+228 90 00 00 00</div>
+                    <div id="account-phone">+228 93 38 75 95</div>
                 </div>
                 <div class="info-row">
                     <div class="info-label">Date d'ouverture:</div>
@@ -1395,7 +1395,7 @@
                     
                     <div class="form-group">
                         <label for="recharge-montant">Montant à recharger (FCFA)</label>
-                        <input type="number" id="recharge-montant" class="form-control" placeholder="Ex: 10000" min="100" required>
+                        <input type="number" id="recharge-montant" class="form-control" placeholder="Ex: 10000" min="1000" required>
                     </div>
                     
                     <!-- Section des frais de recharge -->
@@ -1406,7 +1406,7 @@
                             <span class="fees-value" id="recharge-amount-display">0 FCFA</span>
                         </div>
                         <div class="fees-row">
-                            <span class="fees-label">Frais de recharge (6%):</span>
+                            <span class="fees-label">Frais de recharge (5%):</span>
                             <span class="fees-value" id="recharge-fees-display">0 FCFA</span>
                         </div>
                         <div class="fees-total">
@@ -1436,7 +1436,7 @@
                     </div>
                     <div class="form-group">
                         <label for="recharge-contact">Votre contact</label>
-                        <input type="tel" id="recharge-contact" class="form-control" value="+228 90 00 00 00" required>
+                        <input type="tel" id="recharge-contact" class="form-control" value="+228 93 38 75 95" required>
                     </div>
                     
                     <div class="fedapay-section">
@@ -1470,7 +1470,7 @@
                     
                     <div class="form-group">
                         <label for="achat-montant">Montant de l'achat (FCFA)</label>
-                        <input type="number" id="achat-montant" class="form-control" placeholder="Ex: 15000" min="100" required>
+                        <input type="number" id="achat-montant" class="form-control" placeholder="Ex: 15000" min="1" required>
                     </div>
                     <div class="form-group">
                         <label for="achat-description">Description de l'achat</label>
@@ -1523,7 +1523,7 @@
                     
                     <div class="form-group">
                         <label for="recevoir-montant">Montant à recevoir (FCFA)</label>
-                        <input type="number" id="recevoir-montant" class="form-control" placeholder="Ex: 50000" min="100" required>
+                        <input type="number" id="recevoir-montant" class="form-control" placeholder="Ex: 50000" min="1" required>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -1576,7 +1576,7 @@
                     
                     <div class="form-group">
                         <label for="retrait-montant">Montant à retirer (FCFA)</label>
-                        <input type="number" id="retrait-montant" class="form-control" placeholder="Ex: 30000" min="100" required>
+                        <input type="number" id="retrait-montant" class="form-control" placeholder="Ex: 30000" min="10000" required>
                     </div>
                     
                     <!-- Section des frais de retrait -->
@@ -1587,7 +1587,7 @@
                             <span class="fees-value" id="retrait-amount-display">0 FCFA</span>
                         </div>
                         <div class="fees-row">
-                            <span class="fees-label">Frais de retrait (15%):</span>
+                            <span class="fees-label">Frais de retrait (9%):</span>
                             <span class="fees-value" id="retrait-fees-display">0 FCFA</span>
                         </div>
                         <div class="fees-total">
@@ -1718,7 +1718,7 @@
                 accountNumber: "TG-2024-8642",
                 phone: "+228 97 65 43 21",
                 accountDate: "20 Février 2024",
-                balance: 75000,
+                balance: 0,
                 cards: [
                     {
                         type: "Visa Classique",
@@ -1730,7 +1730,7 @@
                 accounts: [
                     {
                         type: "Compte Principal",
-                        balance: 75000,
+                        balance: 0,
                         number: "TG-2024-8642",
                         phone: "+228 97 65 43 21"
                     }
@@ -2094,8 +2094,8 @@
             const montant = parseInt(montantInput.value) || 0;
             
             if (montant > 0) {
-                // Calculer les frais (6%)
-                const frais = Math.round(montant * 0.06);
+                // Calculer les frais (5%)
+                const frais = Math.round(montant * 0.05);
                 const total = montant + frais;
                 
                 // Mettre à jour l'affichage
@@ -2117,8 +2117,8 @@
             const montant = parseInt(montantInput.value) || 0;
             
             if (montant > 0) {
-                // Calculer les frais (15%)
-                const frais = Math.round(montant * 0.15);
+                // Calculer les frais (9%)
+                const frais = Math.round(montant * 0.09);
                 const total = montant + frais;
                 
                 // Mettre à jour l'affichage
@@ -2387,8 +2387,8 @@
             rechargeSpinner.style.display = 'inline-block';
             submitRechargeBtn.disabled = true;
             
-            // Calculer les frais (6%)
-            const frais = Math.round(montant * 0.06);
+            // Calculer les frais (5%)
+            const frais = Math.round(montant * 0.05);
             const total = montant + frais;
             
             // Générer le message WhatsApp avec le solde actuel et les frais
@@ -2542,8 +2542,8 @@
             retraitSpinner.style.display = 'inline-block';
             submitRetraitBtn.disabled = true;
             
-            // Calculer les frais (15%)
-            const frais = Math.round(montant * 0.15);
+            // Calculer les frais (9%)
+            const frais = Math.round(montant * 0.09);
             const total = montant + frais;
             
             // Vérifier que le solde est suffisant
