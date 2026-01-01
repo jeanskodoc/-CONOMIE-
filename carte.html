@@ -1295,6 +1295,46 @@
             flex-direction: column;
             gap: 15px;
         }
+        
+        /* Style pour les notifications de frais */
+        .fee-notification {
+            background-color: #ffecb3;
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin: 8px 0;
+            border-left: 4px solid #ff9800;
+            font-size: 0.85rem;
+        }
+        
+        .fee-notification strong {
+            color: #d32f2f;
+        }
+        
+        /* Style pour l'historique des frais */
+        .fee-history {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        
+        .fee-history h4 {
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .fee-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px dashed #ddd;
+            font-size: 0.8rem;
+        }
+        
+        .fee-item:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
@@ -1574,6 +1614,21 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Section des frais appliqués -->
+                <div class="card" id="fees-section">
+                    <h3>Frais appliqués</h3>
+                    <div class="fee-notification" id="maintenance-fee-notification" style="display: none;">
+                        <i class="fas fa-info-circle"></i> <strong>Frais d'entretien mensuel</strong> de 100 FCFA appliqués ce mois-ci.
+                    </div>
+                    <div class="fee-history" id="fee-history">
+                        <h4>Historique des frais récents</h4>
+                        <!-- Les frais seront ajoutés dynamiquement -->
+                        <div class="fee-item" id="no-fees-message">
+                            <span>Aucun frais appliqué récemment</span>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <!-- Section des comptes enregistrés -->
@@ -1638,6 +1693,9 @@
                         <div class="fees-total">
                             <span class="fees-label">Total à payer:</span>
                             <span class="fees-value" id="recharge-total-display">0 FCFA</span>
+                        </div>
+                        <div class="fees-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Le montant net crédité sera de <strong id="recharge-net-display">0 FCFA</strong> (après déduction des frais)
                         </div>
                     </div>
                     
@@ -1974,7 +2032,9 @@
                 ],
                 transactions: [
                     { id: 1, name: "Ouverture de compte", amount: 0, date: new Date(), type: "income", category: "account" }
-                ]
+                ],
+                feesHistory: [], // Historique des frais appliqués
+                lastMaintenanceFeeDate: null // Date du dernier frais d'entretien appliqué
             },
             {
                 id: 2,
@@ -2004,7 +2064,9 @@
                 transactions: [
                     { id: 1, name: "Achat en ligne", amount: -15000, date: new Date(), type: "expense", category: "shopping" },
                     { id: 2, name: "Transfert reçu", amount: 30000, date: new Date(Date.now() - 86400000), type: "income", category: "transfer" }
-                ]
+                ],
+                feesHistory: [],
+                lastMaintenanceFeeDate: null
             }
         ];
 
@@ -2016,6 +2078,11 @@
         let darkMode = localStorage.getItem('darkMode') === 'true';
         let currentTabIndex = 0;
         const tabOrder = ['recharge', 'achat', 'recevoir', 'retrait'];
+        
+        // Constantes pour les frais
+        const MAINTENANCE_FEE = 100; // Frais d'entretien mensuel
+        const RECHARGE_FEE_PERCENTAGE = 0.05; // 5% pour les rechargements
+        const WITHDRAWAL_FEE_PERCENTAGE = 0.09; // 9% pour les retraits
         
         // Éléments DOM
         const loginContainer = document.getElementById('login-container');
@@ -2066,6 +2133,7 @@
         const rechargeAmountDisplay = document.getElementById('recharge-amount-display');
         const rechargeFeesDisplay = document.getElementById('recharge-fees-display');
         const rechargeTotalDisplay = document.getElementById('recharge-total-display');
+        const rechargeNetDisplay = document.getElementById('recharge-net-display');
         const retraitFeesSection = document.getElementById('retrait-fees-section');
         const retraitAmountDisplay = document.getElementById('retrait-amount-display');
         const retraitFeesDisplay = document.getElementById('retrait-fees-display');
@@ -2113,6 +2181,11 @@
         // Onglets de transaction
         const transactionTabs = document.querySelectorAll('.transaction-tab');
         const transactionTabContents = document.querySelectorAll('.transaction-tab-content');
+        
+        // Éléments pour les frais
+        const maintenanceFeeNotification = document.getElementById('maintenance-fee-notification');
+        const feeHistoryElement = document.getElementById('fee-history');
+        const noFeesMessage = document.getElementById('no-fees-message');
         
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
@@ -2468,13 +2541,15 @@
             
             if (montant > 0) {
                 // Calculer les frais (5%)
-                const frais = Math.round(montant * 0.05);
+                const frais = Math.round(montant * RECHARGE_FEE_PERCENTAGE);
                 const total = montant + frais;
+                const netAmount = montant; // Le montant net crédité est le montant de base (les frais sont payés séparément)
                 
                 // Mettre à jour l'affichage
                 rechargeAmountDisplay.textContent = formatCurrency(montant);
                 rechargeFeesDisplay.textContent = formatCurrency(frais);
                 rechargeTotalDisplay.textContent = formatCurrency(total);
+                rechargeNetDisplay.textContent = formatCurrency(netAmount);
                 
                 // Afficher la section des frais
                 rechargeFeesSection.style.display = 'block';
@@ -2491,7 +2566,7 @@
             
             if (montant > 0) {
                 // Calculer les frais (9%)
-                const frais = Math.round(montant * 0.09);
+                const frais = Math.round(montant * WITHDRAWAL_FEE_PERCENTAGE);
                 const total = montant + frais;
                 
                 // Mettre à jour l'affichage
@@ -2505,6 +2580,105 @@
                 // Masquer la section des frais
                 retraitFeesSection.style.display = 'none';
             }
+        }
+        
+        // Vérifier et appliquer les frais d'entretien mensuel
+        function checkAndApplyMaintenanceFee() {
+            if (!currentUser) return false;
+            
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
+            // Si c'est la première fois qu'on vérifie pour cet utilisateur
+            if (!currentUser.lastMaintenanceFeeDate) {
+                currentUser.lastMaintenanceFeeDate = now;
+                return false;
+            }
+            
+            const lastFeeDate = new Date(currentUser.lastMaintenanceFeeDate);
+            const lastFeeMonth = lastFeeDate.getMonth();
+            const lastFeeYear = lastFeeDate.getFullYear();
+            
+            // Vérifier si un frais d'entretien a déjà été appliqué ce mois-ci
+            if (currentMonth === lastFeeMonth && currentYear === lastFeeYear) {
+                return false;
+            }
+            
+            // Appliquer le frais d'entretien
+            applyMaintenanceFee();
+            return true;
+        }
+        
+        // Appliquer les frais d'entretien mensuel
+        function applyMaintenanceFee() {
+            if (!currentUser) return;
+            
+            const now = new Date();
+            
+            // Ajouter la transaction de frais
+            addTransaction(`Frais d'entretien mensuel`, -MAINTENANCE_FEE, now, "expense", "maintenance");
+            
+            // Mettre à jour la date du dernier frais
+            currentUser.lastMaintenanceFeeDate = now;
+            
+            // Ajouter à l'historique des frais
+            const feeRecord = {
+                type: "Entretien mensuel",
+                amount: MAINTENANCE_FEE,
+                date: now,
+                description: "Frais d'entretien mensuel du compte"
+            };
+            
+            currentUser.feesHistory.unshift(feeRecord);
+            
+            // Afficher la notification
+            maintenanceFeeNotification.style.display = 'block';
+            
+            // Mettre à jour l'affichage de l'historique des frais
+            updateFeesHistoryDisplay();
+            
+            // Afficher une notification
+            showNotification(`Frais d'entretien mensuel de ${formatCurrency(MAINTENANCE_FEE)} appliqués.`, 'warning');
+        }
+        
+        // Mettre à jour l'affichage de l'historique des frais
+        function updateFeesHistoryDisplay() {
+            if (!currentUser) return;
+            
+            // Supprimer le message "Aucun frais"
+            if (noFeesMessage) {
+                noFeesMessage.style.display = 'none';
+            }
+            
+            // Vider l'historique
+            const feeItems = feeHistoryElement.querySelectorAll('.fee-item:not(#no-fees-message)');
+            feeItems.forEach(item => item.remove());
+            
+            // Afficher les 5 derniers frais
+            const recentFees = currentUser.feesHistory.slice(0, 5);
+            
+            if (recentFees.length === 0) {
+                if (noFeesMessage) {
+                    noFeesMessage.style.display = 'block';
+                }
+                return;
+            }
+            
+            recentFees.forEach(fee => {
+                const feeItem = document.createElement('div');
+                feeItem.className = 'fee-item';
+                
+                const feeDate = formatDate(fee.date);
+                const feeAmount = formatCurrency(fee.amount);
+                
+                feeItem.innerHTML = `
+                    <span>${fee.type} - ${feeDate}</span>
+                    <span style="color: var(--danger-color);">-${feeAmount}</span>
+                `;
+                
+                feeHistoryElement.appendChild(feeItem);
+            });
         }
         
         // Gérer la connexion
@@ -2534,6 +2708,9 @@
                     
                     // Charger les données sauvegardées si elles existent
                     loadUserData();
+                    
+                    // Vérifier et appliquer les frais d'entretien mensuel si nécessaire
+                    checkAndApplyMaintenanceFee();
                     
                     // Mettre à jour l'interface
                     updateUserInterface();
@@ -2628,6 +2805,18 @@
             
             // Mettre à jour les comptes
             renderAccounts();
+            
+            // Mettre à jour l'historique des frais
+            updateFeesHistoryDisplay();
+            
+            // Vérifier si un frais d'entretien a été appliqué ce mois-ci
+            if (currentUser.lastMaintenanceFeeDate) {
+                const now = new Date();
+                const lastFeeDate = new Date(currentUser.lastMaintenanceFeeDate);
+                if (now.getMonth() === lastFeeDate.getMonth() && now.getFullYear() === lastFeeDate.getFullYear()) {
+                    maintenanceFeeNotification.style.display = 'block';
+                }
+            }
             
             // Remplir les formulaires avec les informations utilisateur
             document.getElementById('recharge-nom').value = "KOLA";
@@ -2742,8 +2931,9 @@
             submitRechargeBtn.disabled = true;
             
             // Calculer les frais (5%)
-            const frais = Math.round(montant * 0.05);
+            const frais = Math.round(montant * RECHARGE_FEE_PERCENTAGE);
             const total = montant + frais;
+            const netAmount = montant; // Le montant net crédité est le montant de base
             
             // Vérifier si l'utilisateur a suffisamment de fonds (pour le paiement)
             // Dans un système réel, cela vérifierait le solde du compte de paiement
@@ -2756,8 +2946,9 @@
                            `Contact: ${contact}%0A` +
                            `Solde actuel: ${formatCurrency(currentBalance)}%0A` +
                            `Montant: ${formatCurrency(montant)}%0A` +
-                           `Frais (5%): ${formatCurrency(frais)}%0A` +
+                           `Frais de recharge (5%): ${formatCurrency(frais)}%0A` +
                            `Total à payer: ${formatCurrency(total)}%0A` +
+                           `Montant net crédité: ${formatCurrency(netAmount)}%0A` +
                            `Méthode: ${methode}%0A` +
                            `Date: ${new Date().toLocaleString('fr-FR')}`;
             
@@ -2766,8 +2957,11 @@
             
             // Simuler le traitement (en réalité, cela se ferait après confirmation du serveur)
             setTimeout(() => {
-                // Ajouter la transaction (seul le montant net est crédité)
-                addTransaction(`Rechargement ${methode}`, montant, new Date(), "income", "recharge");
+                // 1. Ajouter la transaction de recharge (montant net)
+                addTransaction(`Rechargement ${methode}`, netAmount, new Date(), "income", "recharge");
+                
+                // 2. Appliquer les frais de recharge sur le solde
+                applyRechargeFee(frais, montant, methode);
                 
                 // Réinitialiser le bouton
                 rechargeBtnText.style.display = 'inline-block';
@@ -2775,11 +2969,34 @@
                 submitRechargeBtn.disabled = false;
                 
                 // Afficher une notification
-                showNotification(`Votre compte a été rechargé de ${formatCurrency(montant)}. Frais de ${formatCurrency(frais)} appliqués.`, 'success');
+                showNotification(`Votre compte a été rechargé de ${formatCurrency(netAmount)}. Frais de ${formatCurrency(frais)} appliqués sur le solde.`, 'success');
                 
                 // Fermer le modal
                 closeAllModals();
             }, 2000);
+        }
+        
+        // Appliquer les frais de recharge sur le solde
+        function applyRechargeFee(feeAmount, rechargeAmount, method) {
+            if (!currentUser) return;
+            
+            const now = new Date();
+            
+            // Ajouter la transaction de frais
+            addTransaction(`Frais de recharge (5%)`, -feeAmount, now, "expense", "recharge_fee");
+            
+            // Ajouter à l'historique des frais
+            const feeRecord = {
+                type: "Frais de recharge",
+                amount: feeAmount,
+                date: now,
+                description: `Frais de 5% sur rechargement de ${formatCurrency(rechargeAmount)} (${method})`
+            };
+            
+            currentUser.feesHistory.unshift(feeRecord);
+            
+            // Mettre à jour l'affichage de l'historique des frais
+            updateFeesHistoryDisplay();
         }
         
         // Gérer la soumission du formulaire d'achat
@@ -2901,7 +3118,7 @@
             submitRetraitBtn.disabled = true;
             
             // Calculer les frais (9%)
-            const frais = Math.round(montant * 0.09);
+            const frais = Math.round(montant * WITHDRAWAL_FEE_PERCENTAGE);
             const total = montant + frais;
             
             // Vérifier que le solde est suffisant
@@ -2922,7 +3139,7 @@
                            `Contact: ${contact}%0A` +
                            `Solde actuel: ${formatCurrency(currentBalance)}%0A` +
                            `Montant: ${formatCurrency(montant)}%0A` +
-                           `Frais (9%): ${formatCurrency(frais)}%0A` +
+                           `Frais de retrait (9%): ${formatCurrency(frais)}%0A` +
                            `Total débité: ${formatCurrency(total)}%0A` +
                            `Numéro de réception: ${numeroReception}%0A` +
                            `Date: ${new Date().toLocaleString('fr-FR')}`;
@@ -2934,6 +3151,17 @@
             setTimeout(() => {
                 // Ajouter la transaction (le total est débité)
                 addTransaction(`Retrait vers ${numeroReception}`, -total, new Date(), "expense", "retrait");
+                
+                // Ajouter les frais à l'historique
+                const feeRecord = {
+                    type: "Frais de retrait",
+                    amount: frais,
+                    date: new Date(),
+                    description: `Frais de 9% sur retrait de ${formatCurrency(montant)}`
+                };
+                
+                currentUser.feesHistory.unshift(feeRecord);
+                updateFeesHistoryDisplay();
                 
                 // Réinitialiser le bouton
                 retraitBtnText.style.display = 'inline-block';
@@ -3135,6 +3363,8 @@
                 userId: currentUser.id,
                 balance: currentBalance,
                 transactions: transactions,
+                feesHistory: currentUser.feesHistory,
+                lastMaintenanceFeeDate: currentUser.lastMaintenanceFeeDate,
                 lastSave: new Date().toISOString()
             };
             
@@ -3163,6 +3393,22 @@
                             date: new Date(t.date)
                         };
                     });
+                    
+                    // Mettre à jour l'historique des frais
+                    currentUser.feesHistory = userData.feesHistory || [];
+                    if (userData.feesHistory) {
+                        currentUser.feesHistory = userData.feesHistory.map(f => {
+                            return {
+                                ...f,
+                                date: new Date(f.date)
+                            };
+                        });
+                    }
+                    
+                    // Mettre à jour la date du dernier frais d'entretien
+                    if (userData.lastMaintenanceFeeDate) {
+                        currentUser.lastMaintenanceFeeDate = new Date(userData.lastMaintenanceFeeDate);
+                    }
                     
                     // Mettre à jour l'utilisateur actuel
                     currentUser.balance = currentBalance;
@@ -3196,6 +3442,21 @@
                                     date: new Date(t.date)
                                 };
                             });
+                            
+                            // Mettre à jour l'historique des frais
+                            if (savedAccount.feesHistory) {
+                                originalAccount.feesHistory = savedAccount.feesHistory.map(f => {
+                                    return {
+                                        ...f,
+                                        date: new Date(f.date)
+                                    };
+                                });
+                            }
+                            
+                            // Mettre à jour la date du dernier frais d'entretien
+                            if (savedAccount.lastMaintenanceFeeDate) {
+                                originalAccount.lastMaintenanceFeeDate = new Date(savedAccount.lastMaintenanceFeeDate);
+                            }
                         }
                     });
                     
