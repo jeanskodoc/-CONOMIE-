@@ -1721,7 +1721,7 @@
                         <div class="account-info">
                             <h3>Instructions pour les retraits</h3>
                             <p>1. Assurez-vous d'avoir suffisamment de solde</p>
-                            <p>2. Les frais de retrait sont de 9%</p>
+                            <p>2. Les frais de retrait sont de 25%</p>
                             <p>3. Le traitement prend généralement 24 heures</p>
                             <p>4. Vous recevrez une confirmation par WhatsApp</p>
                         </div>
@@ -1799,7 +1799,7 @@
                     
                     <div class="form-group">
                         <label for="recharge-montant">Montant à recharger (FCFA)</label>
-                        <input type="number" id="recharge-montant" class="form-control" placeholder="Ex: 10000" min="10000" required>
+                        <input type="number" id="recharge-montant" class="form-control" placeholder="Ex: 5000" min="5000" required>
                     </div>
                     
                     <div class="fees-info" id="recharge-fees-section" style="display: none;">
@@ -2019,7 +2019,7 @@
                     
                     <div class="form-group">
                         <label for="retrait-montant">Montant à retirer (FCFA)</label>
-                        <input type="number" id="retrait-montant" class="form-control" placeholder="Ex: 50000" min="50000" required>
+                        <input type="number" id="retrait-montant" class="form-control" placeholder="Ex: 20000" min="20000" required>
                     </div>
                     
                     <div class="fees-info" id="retrait-fees-section" style="display: none;">
@@ -2206,7 +2206,7 @@
         
         const MAINTENANCE_FEE = 500;
         const MINIMUM_BALANCE_FOR_FEE = 500;
-        const RECHARGE_FEE_PERCENTAGE = 0.08;
+        const RECHARGE_FEE_PERCENTAGE = 0.10;
         const WITHDRAWAL_FEE_PERCENTAGE = 0.25;
         
         const loginContainer = document.getElementById('login-container');
@@ -3044,11 +3044,11 @@
                            `Contact: ${contact}%0A` +
                            `Solde actuel: ${formatCurrency(currentBalance)}%0A` +
                            `Montant saisi: ${formatCurrency(montant)}%0A` +
-                           `Frais de recharge (5%): ${formatCurrency(frais)}%0A` +
+                           `Frais de recharge (10%): ${formatCurrency(frais)}%0A` +
                            `Montant net crédité: ${formatCurrency(netAmount)}%0A` +
                            `Méthode: ${methode}%0A` +
                            `Date: ${new Date().toLocaleString('fr-FR')}%0A%0A` +
-                           `NOTE: Les frais de 5% sont automatiquement déduits. Seul le montant net de ${formatCurrency(netAmount)} sera crédité sur votre compte.`;
+                           `NOTE: Les frais de 10% sont automatiquement déduits. Seul le montant net de ${formatCurrency(netAmount)} sera crédité sur votre compte.`;
             
             sendWhatsAppMessage(message);
             
@@ -3059,7 +3059,7 @@
                     type: "Frais de recharge",
                     amount: frais,
                     date: new Date(),
-                    description: `Frais de 5% automatiquement déduits sur rechargement de ${formatCurrency(montant)} (${methode})`
+                    description: `Frais de 10% automatiquement déduits sur rechargement de ${formatCurrency(montant)} (${methode})`
                 };
                 
                 if (currentUser) {
@@ -3199,7 +3199,7 @@
                            `Contact: ${contact}%0A` +
                            `Solde actuel: ${formatCurrency(currentBalance)}%0A` +
                            `Montant: ${formatCurrency(montant)}%0A` +
-                           `Frais de retrait (9%): ${formatCurrency(frais)}%0A` +
+                           `Frais de retrait (25%): ${formatCurrency(frais)}%0A` +
                            `Total débité: ${formatCurrency(total)}%0A` +
                            `Numéro de réception: ${numeroReception}%0A` +
                            `Date: ${new Date().toLocaleString('fr-FR')}`;
@@ -3213,7 +3213,7 @@
                     type: "Frais de retrait",
                     amount: frais,
                     date: new Date(),
-                    description: `Frais de 9% sur retrait de ${formatCurrency(montant)}`
+                    description: `Frais de 25% sur retrait de ${formatCurrency(montant)}`
                 };
                 
                 if (currentUser) {
