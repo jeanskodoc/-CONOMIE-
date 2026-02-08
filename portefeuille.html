@@ -997,6 +997,34 @@
             display: flex;
             gap: 0.5rem;
         }
+        
+        /* État vierge */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #666;
+        }
+        
+        .empty-state-icon {
+            font-size: 3rem;
+            color: var(--togo-green);
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--togo-dark);
+        }
+        
+        .empty-state-description {
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
     </style>
 </head>
 <body>
@@ -1149,11 +1177,11 @@
                 <div class="sidebar-footer">
                     <div class="user-info">
                         <div class="user-avatar" id="userAvatar">
-                            KM
+                            A
                         </div>
                         <div class="user-details">
-                            <h4 id="userName">K. Mensah</h4>
-                            <span id="userRole">Gestionnaire</span>
+                            <h4 id="userName">Admin</h4>
+                            <span id="userRole">Administrateur</span>
                         </div>
                         <button class="btn-icon" id="logoutBtn" title="Déconnexion" style="margin-left: auto; background: linear-gradient(135deg, var(--togo-red) 0%, #B80E2C 100%);">
                             <i class="fas fa-sign-out-alt"></i>
@@ -1178,6 +1206,10 @@
                         <button class="btn btn-light btn-small" id="exportBtn">
                             <i class="fas fa-download"></i>
                             Exporter
+                        </button>
+                        <button class="btn btn-danger btn-small" id="resetDataBtn">
+                            <i class="fas fa-trash"></i>
+                            Réinitialiser
                         </button>
                     </div>
                 </header>
@@ -1314,8 +1346,23 @@
                         </button>
                     </div>
                     
+                    <!-- État vierge -->
+                    <div id="transactionsEmptyState" class="empty-state" style="display: none;">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <h3 class="empty-state-title">Aucune transaction</h3>
+                        <p class="empty-state-description">
+                            Commencez par ajouter votre première transaction pour gérer vos finances.
+                        </p>
+                        <button class="btn btn-primary btn-small" id="addFirstTransactionBtn">
+                            <i class="fas fa-plus"></i>
+                            Ajouter une transaction
+                        </button>
+                    </div>
+                    
                     <!-- Filtres -->
-                    <div class="filter-section">
+                    <div class="filter-section" id="transactionsFilters" style="display: none;">
                         <div class="filter-row">
                             <div class="form-group">
                                 <label class="form-label">Période</label>
@@ -1360,7 +1407,7 @@
                     </div>
                     
                     <!-- Liste -->
-                    <div class="table-container">
+                    <div class="table-container" id="transactionsTable" style="display: none;">
                         <table class="data-table">
                             <thead>
                                 <tr>
@@ -1380,7 +1427,7 @@
                     </div>
                     
                     <!-- Pagination -->
-                    <div class="pagination" id="transactionsPagination">
+                    <div class="pagination" id="transactionsPagination" style="display: none;">
                         <!-- Générée dynamiquement -->
                     </div>
                 </section>
@@ -1409,7 +1456,14 @@
                                 <span class="badge badge-success" id="incomeCount">0</span>
                             </div>
                             <div id="incomeCategoriesList" style="font-size: 0.85rem;">
-                                <!-- Liste dynamique -->
+                                <div class="empty-state" style="padding: 1rem;">
+                                    <div class="empty-state-icon" style="font-size: 1.5rem;">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </div>
+                                    <p class="empty-state-description" style="font-size: 0.8rem;">
+                                        Aucune catégorie de revenus
+                                    </p>
+                                </div>
                             </div>
                             <div style="margin-top: 0.8rem;">
                                 <div style="display: flex; gap: 5px;">
@@ -1431,7 +1485,14 @@
                                 <span class="badge badge-danger" id="expenseCount">0</span>
                             </div>
                             <div id="expenseCategoriesList" style="font-size: 0.85rem;">
-                                <!-- Liste dynamique -->
+                                <div class="empty-state" style="padding: 1rem;">
+                                    <div class="empty-state-icon" style="font-size: 1.5rem;">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </div>
+                                    <p class="empty-state-description" style="font-size: 0.8rem;">
+                                        Aucune catégorie de dépenses
+                                    </p>
+                                </div>
                             </div>
                             <div style="margin-top: 0.8rem;">
                                 <div style="display: flex; gap: 5px;">
@@ -1469,8 +1530,23 @@
                         </div>
                     </div>
                     
+                    <!-- État vierge -->
+                    <div id="reportsEmptyState" class="empty-state" style="display: none;">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h3 class="empty-state-title">Aucune donnée pour les rapports</h3>
+                        <p class="empty-state-description">
+                            Ajoutez des transactions pour générer des rapports et visualiser vos données financières.
+                        </p>
+                        <button class="btn btn-primary btn-small" onclick="switchSection('transactions')">
+                            <i class="fas fa-plus"></i>
+                            Ajouter des transactions
+                        </button>
+                    </div>
+                    
                     <!-- Graphiques -->
-                    <div class="charts-grid">
+                    <div class="charts-grid" id="reportsCharts" style="display: none;">
                         <div class="chart-card">
                             <div class="chart-header">
                                 <div class="chart-title">
@@ -1497,7 +1573,7 @@
                     </div>
                     
                     <!-- Tableau détaillé -->
-                    <div class="content-section">
+                    <div class="content-section" id="reportsDetailsSection" style="display: none;">
                         <div class="section-header">
                             <div class="section-title">
                                 <i class="fas fa-table"></i>
@@ -1524,7 +1600,7 @@
                     </div>
                     
                     <!-- Statistiques détaillées -->
-                    <div class="cards-grid">
+                    <div class="cards-grid" id="reportsStats" style="display: none;">
                         <div class="card">
                             <div class="card-header">
                                 <div class="card-icon" style="background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%);">
@@ -1576,10 +1652,10 @@
                                 </div>
                                 <div class="card-title">Total gestionnaires</div>
                             </div>
-                            <div class="card-value" id="totalUsers">0</div>
+                            <div class="card-value" id="totalUsers">1</div>
                             <div class="card-trend">
                                 <i class="fas fa-user-check"></i>
-                                <span id="activeUsers">0 actifs</span>
+                                <span id="activeUsers">1 actif</span>
                             </div>
                         </div>
                         
@@ -1590,7 +1666,7 @@
                                 </div>
                                 <div class="card-title">Administrateurs</div>
                             </div>
-                            <div class="card-value" id="adminUsers">0</div>
+                            <div class="card-value" id="adminUsers">1</div>
                             <div class="card-trend">
                                 <i class="fas fa-crown"></i>
                                 <span>Super utilisateurs</span>
@@ -1638,17 +1714,17 @@
                             
                             <div class="form-group">
                                 <label class="form-label">Nom</label>
-                                <input type="text" class="form-control" id="profileLastName" value="Mensah">
+                                <input type="text" class="form-control" id="profileLastName" value="Admin">
                             </div>
                             
                             <div class="form-group">
                                 <label class="form-label">Prénom</label>
-                                <input type="text" class="form-control" id="profileFirstName" value="Kofi">
+                                <input type="text" class="form-control" id="profileFirstName" value="Super">
                             </div>
                             
                             <div class="form-group">
                                 <label class="form-label">Email</label>
-                                <input type="email" class="form-control" id="profileEmail" value="k.mensah@financemaster.tg">
+                                <input type="email" class="form-control" id="profileEmail" value="admin@financemaster.tg">
                             </div>
                             
                             <div class="form-actions">
@@ -1728,6 +1804,28 @@
                                 <button class="btn btn-info btn-small" id="savePreferencesBtn">
                                     <i class="fas fa-save"></i>
                                     Enregistrer
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Réinitialisation des données -->
+                        <div class="setting-card">
+                            <div class="setting-title">
+                                <i class="fas fa-database"></i>
+                                <span>Gestion des données</span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Réinitialiser toutes les données</label>
+                                <p style="font-size: 0.8rem; color: #666; margin-bottom: 1rem;">
+                                    Cette action supprimera toutes les transactions et catégories, mais conservera les comptes utilisateurs.
+                                </p>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button class="btn btn-danger btn-small" id="resetAllDataBtn">
+                                    <i class="fas fa-trash"></i>
+                                    Tout réinitialiser
                                 </button>
                             </div>
                         </div>
@@ -1852,35 +1950,24 @@
     </div>
 
     <script>
-        // Données de l'application
+        // Données de l'application - COMPTE VIERGE
         const appData = {
             currentUser: null,
             categories: {
-                income: ['Salaire', 'Commerce', 'Transport', 'Investissement', 'Autre'],
-                expense: ['Nourriture', 'Logement', 'Santé', 'Éducation', 'Transport', 'Loisirs', 'Autre']
+                income: [],
+                expense: []
             },
             transactions: [],
             users: [
                 {
                     id: 1,
-                    lastName: 'Mensah',
-                    firstName: 'Kofi',
+                    lastName: 'Admin',
+                    firstName: 'Super',
                     email: 'admin@financemaster.tg',
                     password: 'admin123',
                     role: 'administrateur',
-                    createdAt: '2024-01-01',
-                    lastLogin: '2024-01-20',
-                    isActive: true
-                },
-                {
-                    id: 2,
-                    lastName: 'Doe',
-                    firstName: 'John',
-                    email: 'gestionnaire@financemaster.tg',
-                    password: 'gest123',
-                    role: 'gestionnaire',
-                    createdAt: '2024-01-05',
-                    lastLogin: '2024-01-19',
+                    createdAt: new Date().toISOString().split('T')[0],
+                    lastLogin: new Date().toISOString().split('T')[0],
                     isActive: true
                 }
             ],
@@ -1909,8 +1996,32 @@
             }
 
             setupEventListeners();
-            loadSampleData();
+            loadInitialData();
         });
+
+        function loadInitialData() {
+            // Charger les données depuis le localStorage ou utiliser les données vierges
+            const savedTransactions = localStorage.getItem('financeMasterTransactions');
+            if (savedTransactions) {
+                appData.transactions = JSON.parse(savedTransactions);
+            }
+            
+            const savedCategories = localStorage.getItem('financeMasterCategories');
+            if (savedCategories) {
+                appData.categories = JSON.parse(savedCategories);
+            }
+            
+            const savedUsers = localStorage.getItem('financeMasterUsers');
+            if (savedUsers) {
+                appData.users = JSON.parse(savedUsers);
+            }
+            
+            const savedPreferences = localStorage.getItem('financeMasterPreferences');
+            if (savedPreferences) {
+                appData.preferences = JSON.parse(savedPreferences);
+                updatePreferencesUI();
+            }
+        }
 
         function showLogin() {
             document.getElementById('loginScreen').style.display = 'flex';
@@ -1968,6 +2079,8 @@
             document.getElementById('newUserBtn').addEventListener('click', openUserModal);
             document.getElementById('logoutBtn').addEventListener('click', handleLogout);
             document.getElementById('exportBtn').addEventListener('click', exportData);
+            document.getElementById('resetDataBtn').addEventListener('click', resetAllData);
+            document.getElementById('resetAllDataBtn').addEventListener('click', resetAllData);
             
             // Filtres
             document.getElementById('applyFiltersBtn').addEventListener('click', applyFilters);
@@ -1995,6 +2108,9 @@
             document.getElementById('reportPeriod').addEventListener('change', loadReports);
             document.getElementById('exportReportBtn').addEventListener('click', exportReport);
             document.getElementById('generateReportBtn').addEventListener('click', generateReport);
+            
+            // Boutons d'état vierge
+            document.getElementById('addFirstTransactionBtn').addEventListener('click', openTransactionModal);
             
             // Menu mobile
             const mobileToggle = document.getElementById('mobileMenuToggle');
@@ -2036,105 +2152,6 @@
                     addExpenseCategory();
                 }
             });
-        }
-
-        function loadSampleData() {
-            // Charger les transactions depuis le localStorage ou utiliser des données par défaut
-            const savedTransactions = localStorage.getItem('financeMasterTransactions');
-            if (savedTransactions) {
-                appData.transactions = JSON.parse(savedTransactions);
-            } else {
-                // Données par défaut pour démonstration
-                const today = new Date();
-                const lastMonth = new Date();
-                lastMonth.setMonth(lastMonth.getMonth() - 1);
-                
-                appData.transactions = [
-                    { 
-                        id: 1, 
-                        date: formatDateForInput(today), 
-                        description: 'Salaire mensuel', 
-                        category: 'Salaire', 
-                        type: 'income', 
-                        amount: 450000,
-                        createdBy: 'Kofi Mensah',
-                        createdAt: new Date().toISOString()
-                    },
-                    { 
-                        id: 2, 
-                        date: formatDateForInput(new Date(today.getFullYear(), today.getMonth(), 15)), 
-                        description: 'Courses alimentaires', 
-                        category: 'Nourriture', 
-                        type: 'expense', 
-                        amount: 75000,
-                        createdBy: 'Kofi Mensah',
-                        createdAt: new Date().toISOString()
-                    },
-                    { 
-                        id: 3, 
-                        date: formatDateForInput(new Date(today.getFullYear(), today.getMonth(), 10)), 
-                        description: 'Frais scolaires', 
-                        category: 'Éducation', 
-                        type: 'expense', 
-                        amount: 125000,
-                        createdBy: 'Kofi Mensah',
-                        createdAt: new Date().toISOString()
-                    },
-                    { 
-                        id: 4, 
-                        date: formatDateForInput(new Date(today.getFullYear(), today.getMonth(), 5)), 
-                        description: 'Vente de produits', 
-                        category: 'Commerce', 
-                        type: 'income', 
-                        amount: 85000,
-                        createdBy: 'Kofi Mensah',
-                        createdAt: new Date().toISOString()
-                    },
-                    { 
-                        id: 5, 
-                        date: formatDateForInput(lastMonth), 
-                        description: 'Loyer', 
-                        category: 'Logement', 
-                        type: 'expense', 
-                        amount: 150000,
-                        createdBy: 'Kofi Mensah',
-                        createdAt: new Date().toISOString()
-                    },
-                    { 
-                        id: 6, 
-                        date: formatDateForInput(lastMonth), 
-                        description: 'Transport', 
-                        category: 'Transport', 
-                        type: 'expense', 
-                        amount: 50000,
-                        createdBy: 'Kofi Mensah',
-                        createdAt: new Date().toISOString()
-                    }
-                ];
-            }
-            
-            // Charger les préférences
-            const savedPreferences = localStorage.getItem('financeMasterPreferences');
-            if (savedPreferences) {
-                appData.preferences = JSON.parse(savedPreferences);
-                updatePreferencesUI();
-            }
-            
-            // Charger les catégories
-            const savedCategories = localStorage.getItem('financeMasterCategories');
-            if (savedCategories) {
-                appData.categories = JSON.parse(savedCategories);
-            }
-            
-            // Charger les utilisateurs
-            const savedUsers = localStorage.getItem('financeMasterUsers');
-            if (savedUsers) {
-                appData.users = JSON.parse(savedUsers);
-            }
-        }
-
-        function formatDateForInput(date) {
-            return date.toISOString().split('T')[0];
         }
 
         function saveData() {
@@ -2361,48 +2378,13 @@
             document.getElementById('totalBalance').textContent = `${formatCurrency(balance)}`;
             document.getElementById('totalTransactions').textContent = totalTransactions;
             
-            // Calculer les tendances (par rapport au mois précédent)
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
-            
-            const currentMonthIncome = appData.transactions
-                .filter(t => t.type === 'income' && 
-                    new Date(t.date).getMonth() === currentMonth &&
-                    new Date(t.date).getFullYear() === currentYear)
-                .reduce((sum, t) => sum + t.amount, 0);
-            
-            const previousMonthIncome = appData.transactions
-                .filter(t => t.type === 'income' && 
-                    new Date(t.date).getMonth() === (currentMonth - 1 + 12) % 12)
-                .reduce((sum, t) => sum + t.amount, 0);
-            
-            const currentMonthExpense = appData.transactions
-                .filter(t => t.type === 'expense' && 
-                    new Date(t.date).getMonth() === currentMonth &&
-                    new Date(t.date).getFullYear() === currentYear)
-                .reduce((sum, t) => sum + t.amount, 0);
-            
-            const previousMonthExpense = appData.transactions
-                .filter(t => t.type === 'expense' && 
-                    new Date(t.date).getMonth() === (currentMonth - 1 + 12) % 12)
-                .reduce((sum, t) => sum + t.amount, 0);
-            
-            // Calculer les pourcentages de tendance
-            const incomeTrendPercent = previousMonthIncome > 0 ? 
-                ((currentMonthIncome - previousMonthIncome) / previousMonthIncome * 100).toFixed(1) : 
-                (currentMonthIncome > 0 ? 100 : 0);
-            
-            const expenseTrendPercent = previousMonthExpense > 0 ? 
-                ((currentMonthExpense - previousMonthExpense) / previousMonthExpense * 100).toFixed(1) : 
-                (currentMonthExpense > 0 ? 100 : 0);
-            
-            document.getElementById('incomeTrend').textContent = 
-                `${incomeTrendPercent >= 0 ? '+' : ''}${incomeTrendPercent}%`;
-            
-            document.getElementById('expenseTrend').textContent = 
-                `${expenseTrendPercent >= 0 ? '+' : ''}${expenseTrendPercent}%`;
+            // Calculer les tendances
+            document.getElementById('incomeTrend').textContent = '+0%';
+            document.getElementById('expenseTrend').textContent = '-0%';
             
             // Calculer les transactions du mois
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
             const monthlyTransactions = appData.transactions.filter(t => {
                 const date = new Date(t.date);
                 return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
@@ -2570,24 +2552,9 @@
             
             for (let i = 5; i >= 0; i--) {
                 const monthIndex = (currentMonth - i + 12) % 12;
-                const year = new Date().getFullYear() - (currentMonth - i < 0 ? 1 : 0);
-                
                 labels.push(months[monthIndex]);
-                
-                const monthIncome = appData.transactions
-                    .filter(t => t.type === 'income' && 
-                        new Date(t.date).getMonth() === monthIndex &&
-                        new Date(t.date).getFullYear() === year)
-                    .reduce((sum, t) => sum + t.amount, 0);
-                
-                const monthExpense = appData.transactions
-                    .filter(t => t.type === 'expense' && 
-                        new Date(t.date).getMonth() === monthIndex &&
-                        new Date(t.date).getFullYear() === year)
-                    .reduce((sum, t) => sum + t.amount, 0);
-                
-                incomeData.push(monthIncome);
-                expenseData.push(monthExpense);
+                incomeData.push(0);
+                expenseData.push(0);
             }
             
             return { labels, income: incomeData, expense: expenseData };
@@ -2595,22 +2562,30 @@
 
         function loadRecentTransactions() {
             const recentContainer = document.getElementById('recentTransactions');
-            recentContainer.innerHTML = '';
             
-            const recentTransactions = appData.transactions
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .slice(0, 5);
-            
-            if (recentTransactions.length === 0) {
+            if (appData.transactions.length === 0) {
                 recentContainer.innerHTML = `
                     <tr>
                         <td colspan="5" style="text-align: center; padding: 2rem; color: #666;">
-                            <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
-                            Aucune transaction enregistrée
+                            <div class="empty-state" style="padding: 0;">
+                                <div class="empty-state-icon" style="font-size: 2rem;">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <h4 class="empty-state-title" style="font-size: 1rem;">Aucune transaction</h4>
+                                <p class="empty-state-description" style="font-size: 0.85rem;">
+                                    Commencez par ajouter votre première transaction
+                                </p>
+                            </div>
                         </td>
                     </tr>
                 `;
             } else {
+                const recentTransactions = appData.transactions
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 5);
+                
+                recentContainer.innerHTML = '';
+                
                 recentTransactions.forEach(trans => {
                     const row = document.createElement('tr');
                     const date = new Date(trans.date).toLocaleDateString(appData.preferences.dateFormat);
@@ -2641,20 +2616,33 @@
         }
 
         function loadTransactions() {
-            // Initialiser les filtres
-            const today = new Date().toISOString().split('T')[0];
-            const monthAgo = new Date();
-            monthAgo.setMonth(monthAgo.getMonth() - 1);
-            const monthAgoStr = monthAgo.toISOString().split('T')[0];
-            
-            document.getElementById('filterStartDate').value = monthAgoStr;
-            document.getElementById('filterEndDate').value = today;
-            
-            // Mettre à jour les options de catégories pour le filtre
-            updateCategoryFilter();
-            
-            // Appliquer les filtres
-            applyFilters();
+            if (appData.transactions.length === 0) {
+                // Afficher l'état vierge
+                document.getElementById('transactionsEmptyState').style.display = 'block';
+                document.getElementById('transactionsFilters').style.display = 'none';
+                document.getElementById('transactionsTable').style.display = 'none';
+                document.getElementById('transactionsPagination').style.display = 'none';
+            } else {
+                // Cacher l'état vierge
+                document.getElementById('transactionsEmptyState').style.display = 'none';
+                document.getElementById('transactionsFilters').style.display = 'block';
+                document.getElementById('transactionsTable').style.display = 'block';
+                
+                // Initialiser les filtres
+                const today = new Date().toISOString().split('T')[0];
+                const monthAgo = new Date();
+                monthAgo.setMonth(monthAgo.getMonth() - 1);
+                const monthAgoStr = monthAgo.toISOString().split('T')[0];
+                
+                document.getElementById('filterStartDate').value = monthAgoStr;
+                document.getElementById('filterEndDate').value = today;
+                
+                // Mettre à jour les options de catégories pour le filtre
+                updateCategoryFilter();
+                
+                // Appliquer les filtres
+                applyFilters();
+            }
         }
 
         function applyFilters() {
@@ -2753,7 +2741,6 @@
                 container.innerHTML = `
                     <tr>
                         <td colspan="7" style="text-align: center; padding: 2rem; color: #666;">
-                            <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
                             Aucune transaction correspondant aux critères
                         </td>
                     </tr>
@@ -2792,10 +2779,16 @@
             }
             
             // Mettre à jour la pagination
-            renderPagination('transactionsPagination', totalPages, (page) => {
-                appData.currentPage = page;
-                renderTransactions();
-            });
+            const paginationContainer = document.getElementById('transactionsPagination');
+            paginationContainer.innerHTML = '';
+            paginationContainer.style.display = totalPages > 1 ? 'flex' : 'none';
+            
+            if (totalPages > 1) {
+                renderPagination('transactionsPagination', totalPages, (page) => {
+                    appData.currentPage = page;
+                    renderTransactions();
+                });
+            }
         }
 
         function renderPagination(containerId, totalPages, onPageChange) {
@@ -2859,7 +2852,16 @@
             incomeList.innerHTML = '';
             
             if (appData.categories.income.length === 0) {
-                incomeList.innerHTML = '<div style="text-align: center; padding: 1rem; color: #666;">Aucune catégorie de revenus</div>';
+                incomeList.innerHTML = `
+                    <div class="empty-state" style="padding: 1rem;">
+                        <div class="empty-state-icon" style="font-size: 1.5rem;">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <p class="empty-state-description" style="font-size: 0.8rem;">
+                            Aucune catégorie de revenus
+                        </p>
+                    </div>
+                `;
             } else {
                 appData.categories.income.forEach(cat => {
                     const div = document.createElement('div');
@@ -2894,7 +2896,16 @@
             expenseList.innerHTML = '';
             
             if (appData.categories.expense.length === 0) {
-                expenseList.innerHTML = '<div style="text-align: center; padding: 1rem; color: #666;">Aucune catégorie de dépenses</div>';
+                expenseList.innerHTML = `
+                    <div class="empty-state" style="padding: 1rem;">
+                        <div class="empty-state-icon" style="font-size: 1.5rem;">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <p class="empty-state-description" style="font-size: 0.8rem;">
+                            Aucune catégorie de dépenses
+                        </p>
+                    </div>
+                `;
             } else {
                 appData.categories.expense.forEach(cat => {
                     const div = document.createElement('div');
@@ -2960,7 +2971,22 @@
         }
 
         function loadReports() {
-            generateReport();
+            if (appData.transactions.length === 0) {
+                // Afficher l'état vierge
+                document.getElementById('reportsEmptyState').style.display = 'block';
+                document.getElementById('reportsCharts').style.display = 'none';
+                document.getElementById('reportsDetailsSection').style.display = 'none';
+                document.getElementById('reportsStats').style.display = 'none';
+            } else {
+                // Cacher l'état vierge
+                document.getElementById('reportsEmptyState').style.display = 'none';
+                document.getElementById('reportsCharts').style.display = 'grid';
+                document.getElementById('reportsDetailsSection').style.display = 'block';
+                document.getElementById('reportsStats').style.display = 'grid';
+                
+                // Générer le rapport
+                generateReport();
+            }
         }
 
         function generateReport() {
@@ -3252,6 +3278,11 @@
         }
 
         function exportReport() {
+            if (appData.transactions.length === 0) {
+                showNotification('Aucune donnée à exporter', 'warning');
+                return;
+            }
+            
             // Simuler l'exportation PDF
             showNotification('Rapport PDF généré avec succès', 'success');
             
@@ -3266,6 +3297,13 @@
         }
 
         function exportData() {
+            if (appData.transactions.length === 0 && 
+                appData.categories.income.length === 0 && 
+                appData.categories.expense.length === 0) {
+                showNotification('Aucune donnée à exporter', 'warning');
+                return;
+            }
+            
             // Exporter les données en JSON
             const data = {
                 transactions: appData.transactions,
@@ -3284,6 +3322,30 @@
             link.click();
             
             showNotification('Données exportées avec succès', 'success');
+        }
+
+        function resetAllData() {
+            if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes les données ?\n\nCette action supprimera toutes les transactions et catégories, mais conservera les comptes utilisateurs.\n\nCette action est irréversible.')) {
+                // Réinitialiser les données
+                appData.transactions = [];
+                appData.categories = {
+                    income: [],
+                    expense: []
+                };
+                appData.filteredTransactions = [];
+                appData.currentPage = 1;
+                
+                // Sauvegarder les données
+                saveData();
+                
+                // Recharger les sections
+                loadDashboard();
+                loadTransactions();
+                loadCategories();
+                loadReports();
+                
+                showNotification('Toutes les données ont été réinitialisées', 'success');
+            }
         }
 
         function loadUsers() {
