@@ -947,7 +947,8 @@
                 <div class="card balance-card">
                     <div class="balance-label">Solde actuel</div>
                     <div class="balance-amount" id="balance-amount">
-                        <span id="balance-text">500 FCFA</span>
+                        <span class="balance-loading" id="balance-loading" style="display: inline-block;"></span>
+                        <span id="balance-text">Vérification des frais...</span>
                     </div>
                     <div class="maintenance-fee-info" id="maintenance-fee-info">
                         <span><i class="fas fa-calendar-alt"></i> Frais d'entretien mensuel: 500 FCFA</span>
@@ -964,7 +965,7 @@
                     </div>
                     
                     <div id="recharge-tab" class="transaction-tab-content active">
-                        <div class="fedapay-container">
+                        <div class="fedapay-section">
                             <h4 style="margin-bottom: 10px;">💳 Paiement sécurisé via FedaPay</h4>
                             <p style="margin-bottom: 15px; font-size: 0.85rem;">Cliquez sur le bouton ci-dessous pour effectuer votre paiement</p>
                             <button class="fedapay-btn" id="fedapay-recharge-btn">
@@ -1135,16 +1136,16 @@
         const RECHARGE_FEE_PERCENTAGE = 0.10;
         const WITHDRAWAL_FEE_PERCENTAGE = 0.25;
         
-        // Comptes enregistrés - Solde initial à 500 FCFA
+        // Comptes enregistrés - SOLDE INITIAL À 1000 FCFA
         let currentUser = {
             id: 1,
             username: "KOLA",
             fullname: "KOLA Maniwah Essohouna",
             phone: "+228 93 38 75 95",
             email: "kola@example.com",
-            balance: 500,
+            balance: 1000,
             transactions: [
-                { id: 1, name: "Ouverture de compte", amount: 500, date: new Date(2024, 2, 15), type: "income" }
+                { id: 1, name: "Ouverture de compte", amount: 1000, date: new Date(2024, 2, 15), type: "income" }
             ],
             feesHistory: [],
             lastMaintenanceFeeDate: null,
@@ -1160,7 +1161,9 @@
         const loginForm = document.getElementById('login-form');
         const loginError = document.getElementById('login-error');
         const logoutBtn = document.getElementById('logout-btn');
+        const balanceAmount = document.getElementById('balance-amount');
         const balanceText = document.getElementById('balance-text');
+        const balanceLoading = document.getElementById('balance-loading');
         const transactionList = document.getElementById('transaction-list');
         const saveNotification = document.getElementById('save-notification');
         const feesHistoryList = document.getElementById('fees-history-list');
