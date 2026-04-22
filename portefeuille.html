@@ -657,13 +657,6 @@
             font-size: 0.9rem;
         }
         
-        .login-switch {
-            text-align: center;
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--gray-200);
-        }
-        
         .badge {
             padding: 0.3rem 0.7rem;
             border-radius: 20px;
@@ -837,66 +830,26 @@
                         <span style="color: var(--togo-red);">Togo 🇹🇬</span>
                     </div>
                 </div>
-                <h2 class="login-title" id="loginTitle">Connexion</h2>
-                <p class="login-subtitle" id="loginSubtitle">Accédez à votre tableau de bord</p>
+                <h2 class="login-title">Connexion</h2>
+                <p class="login-subtitle">Accédez à votre tableau de bord</p>
             </div>
             
             <form id="loginForm">
                 <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-control" id="loginEmail" required>
+                    <label class="form-label">Identifiant (Email ou Nom d'utilisateur)</label>
+                    <input type="text" class="form-control" id="loginIdentifier" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Mot de passe</label>
                     <input type="password" class="form-control" id="loginPassword" required>
                 </div>
                 <div class="form-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                    <button type="button" class="btn btn-light" id="switchToRegister">Créer un compte</button>
                     <button type="submit" class="btn btn-primary">Se connecter</button>
                 </div>
             </form>
             
-            <form id="registerForm" style="display: none;">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Nom</label>
-                        <input type="text" class="form-control" id="registerLastName" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Prénom</label>
-                        <input type="text" class="form-control" id="registerFirstName" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-control" id="registerEmail" required>
-                </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Mot de passe</label>
-                        <input type="password" class="form-control" id="registerPassword" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Confirmation</label>
-                        <input type="password" class="form-control" id="registerConfirmPassword" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Rôle</label>
-                    <select class="form-control" id="registerRole">
-                        <option value="gestionnaire">Gestionnaire</option>
-                        <option value="administrateur">Administrateur</option>
-                    </select>
-                </div>
-                <div class="form-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                    <button type="button" class="btn btn-light" id="switchToLogin">Déjà un compte</button>
-                    <button type="submit" class="btn btn-success">Créer le compte</button>
-                </div>
-            </form>
-            
-            <div class="login-switch">
-                <span id="switchText">Pas encore de compte ? </span>
-                <a href="#" id="switchLink">Créer un compte</a>
+            <div class="login-switch" style="text-align: center; margin-top: 1rem; font-size: 0.85rem; color: #666;">
+                <i class="fas fa-lock"></i> Identifiants de démonstration : admin@financemaster.tg / admin123
             </div>
         </div>
     </div>
@@ -934,10 +887,6 @@
                         <i class="nav-icon fas fa-chart-bar"></i>
                         <span>Rapports</span>
                     </button>
-                    <button class="nav-item" data-section="users">
-                        <i class="nav-icon fas fa-users"></i>
-                        <span>Gestionnaires</span>
-                    </button>
                     <button class="nav-item" data-section="settings">
                         <i class="nav-icon fas fa-cog"></i>
                         <span>Paramètres</span>
@@ -948,8 +897,8 @@
                     <div class="user-info">
                         <div class="user-avatar" id="userAvatar">A</div>
                         <div class="user-details">
-                            <h4 id="userName">Admin</h4>
-                            <span id="userRole">Administrateur</span>
+                            <h4 id="userName">Utilisateur</h4>
+                            <span id="userRole">Utilisateur</span>
                         </div>
                         <button class="btn-icon" id="logoutBtn" style="margin-left: auto; background: linear-gradient(135deg, var(--togo-red) 0%, #B80E2C 100%);">
                             <i class="fas fa-sign-out-alt"></i>
@@ -1111,23 +1060,6 @@
                     </div>
                 </div>
                 
-                <!-- Users Section -->
-                <div id="users-section" class="content-section">
-                    <div class="section-header">
-                        <div class="section-title"><i class="fas fa-users"></i> <h2>Gestionnaires</h2></div>
-                        <button class="btn btn-success btn-sm" id="newUserBtn"><i class="fas fa-user-plus"></i> Nouveau</button>
-                    </div>
-                    
-                    <div class="cards-grid">
-                        <div class="card"><div class="card-header"><div class="card-icon"><i class="fas fa-users"></i></div><div class="card-title">Total</div></div><div class="card-value" id="totalUsers">1</div></div>
-                        <div class="card"><div class="card-header"><div class="card-icon" style="background: linear-gradient(135deg, var(--warning) 0%, #D35400 100%);"><i class="fas fa-user-shield"></i></div><div class="card-title">Administrateurs</div></div><div class="card-value" id="adminUsers">1</div></div>
-                    </div>
-                    
-                    <div class="table-responsive">
-                        <table class="data-table"><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Date création</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="usersList"></tbody></table>
-                    </div>
-                </div>
-                
                 <!-- Settings Section -->
                 <div id="settings-section" class="content-section">
                     <div class="section-header"><div class="section-title"><i class="fas fa-cog"></i> <h2>Paramètres</h2></div></div>
@@ -1185,26 +1117,6 @@
             </div>
         </div>
         
-        <div class="modal" id="userModal">
-            <div class="modal-content">
-                <div class="modal-header"><div class="modal-title"><i class="fas fa-user-plus"></i> <span id="modalUserTitle">Nouveau Gestionnaire</span></div><button class="modal-close">&times;</button></div>
-                <div class="modal-body">
-                    <form id="userForm">
-                        <div class="form-grid">
-                            <div class="form-group"><label class="form-label">Nom</label><input type="text" class="form-control" id="userLastName" required></div>
-                            <div class="form-group"><label class="form-label">Prénom</label><input type="text" class="form-control" id="userFirstName" required></div>
-                        </div>
-                        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="userEmail" required></div>
-                        <div class="form-grid">
-                            <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" class="form-control" id="userPassword" required></div>
-                            <div class="form-group"><label class="form-label">Rôle</label><select class="form-control" id="userRole"><option value="gestionnaire">Gestionnaire</option><option value="administrateur">Administrateur</option></select></div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer"><button class="btn btn-light modal-close">Annuler</button><button class="btn btn-success" id="saveUserBtn">Enregistrer</button></div>
-            </div>
-        </div>
-        
         <div class="notification" id="notification"></div>
     </div>
 
@@ -1214,13 +1126,26 @@
             currentUser: null,
             categories: { income: ['Salaire', 'Freelance', 'Investissements'], expense: ['Alimentation', 'Transport', 'Loyer', 'Divertissement'] },
             transactions: [],
-            users: [{ id: 1, lastName: 'Admin', firstName: 'Super', email: 'admin@financemaster.tg', password: 'admin123', role: 'administrateur', createdAt: new Date().toISOString().split('T')[0], lastLogin: new Date().toISOString().split('T')[0], isActive: true }],
+            users: [],
             preferences: { currency: 'FCFA', pageLimit: 25 },
             editingTransactionId: null,
-            editingUserId: null,
             currentPage: 1,
             filteredTransactions: [],
             charts: {}
+        };
+        
+        // Utilisateur unique pour l'application
+        const MASTER_USER = {
+            id: 1,
+            lastName: 'Admin',
+            firstName: 'Master',
+            email: 'admin@financemaster.tg',
+            username: 'admin',
+            password: 'admin123',
+            role: 'administrateur',
+            createdAt: new Date().toISOString().split('T')[0],
+            lastLogin: new Date().toISOString().split('T')[0],
+            isActive: true
         };
         
         // Initialisation
@@ -1242,26 +1167,22 @@
             if (savedTransactions) appData.transactions = JSON.parse(savedTransactions);
             const savedCategories = localStorage.getItem('financeMasterCategories');
             if (savedCategories) appData.categories = JSON.parse(savedCategories);
-            const savedUsers = localStorage.getItem('financeMasterUsers');
-            if (savedUsers) appData.users = JSON.parse(savedUsers);
             const savedPreferences = localStorage.getItem('financeMasterPreferences');
             if (savedPreferences) appData.preferences = JSON.parse(savedPreferences);
+            
+            // Initialiser l'utilisateur master
+            appData.users = [MASTER_USER];
         }
         
         function saveData() {
             localStorage.setItem('financeMasterTransactions', JSON.stringify(appData.transactions));
             localStorage.setItem('financeMasterCategories', JSON.stringify(appData.categories));
-            localStorage.setItem('financeMasterUsers', JSON.stringify(appData.users));
             localStorage.setItem('financeMasterPreferences', JSON.stringify(appData.preferences));
         }
         
         function setupEventListeners() {
-            // Login/Register
+            // Login
             document.getElementById('loginForm').addEventListener('submit', (e) => { e.preventDefault(); handleLogin(); });
-            document.getElementById('registerForm').addEventListener('submit', (e) => { e.preventDefault(); handleRegister(); });
-            document.getElementById('switchToRegister').addEventListener('click', () => showRegisterForm());
-            document.getElementById('switchToLogin').addEventListener('click', () => showLoginForm());
-            document.getElementById('switchLink').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('loginForm').style.display === 'block' ? showRegisterForm() : showLoginForm(); });
             
             // Navigation
             document.querySelectorAll('.nav-item').forEach(item => {
@@ -1272,7 +1193,6 @@
             document.getElementById('quickAddBtn').addEventListener('click', () => openTransactionModal());
             document.getElementById('newTransactionBtn').addEventListener('click', () => openTransactionModal());
             document.getElementById('viewAllBtn').addEventListener('click', () => switchSection('transactions'));
-            document.getElementById('newUserBtn').addEventListener('click', () => openUserModal());
             document.getElementById('logoutBtn').addEventListener('click', handleLogout);
             document.getElementById('exportBtn').addEventListener('click', exportData);
             document.getElementById('resetAllDataBtn').addEventListener('click', resetAllData);
@@ -1288,7 +1208,6 @@
             document.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', () => closeModal()));
             document.getElementById('saveTransactionBtn').addEventListener('click', saveTransaction);
             document.getElementById('transactionType').addEventListener('change', updateCategoryOptions);
-            document.getElementById('saveUserBtn').addEventListener('click', saveUser);
             
             // Categories
             document.getElementById('addIncomeBtn').addEventListener('click', () => addCategory('income'));
@@ -1322,58 +1241,31 @@
         }
         
         function handleLogin() {
-            const email = document.getElementById('loginEmail').value;
+            const identifier = document.getElementById('loginIdentifier').value;
             const password = document.getElementById('loginPassword').value;
-            const user = appData.users.find(u => u.email === email && u.password === password);
+            
+            // Vérifier si l'identifiant correspond à l'email ou au nom d'utilisateur
+            const user = appData.users.find(u => 
+                (u.email === identifier || u.username === identifier) && 
+                u.password === password
+            );
             
             if (user && user.isActive) {
                 user.lastLogin = new Date().toISOString().split('T')[0];
-                saveData();
-                appData.currentUser = { id: user.id, lastName: user.lastName, firstName: user.firstName, email: user.email, role: user.role };
+                appData.currentUser = { 
+                    id: user.id, 
+                    lastName: user.lastName, 
+                    firstName: user.firstName, 
+                    email: user.email,
+                    username: user.username,
+                    role: user.role 
+                };
                 localStorage.setItem('financeMasterUser', JSON.stringify(appData.currentUser));
                 showNotification('Connexion réussie !', 'success');
                 setTimeout(() => showApp(), 500);
             } else {
-                showNotification('Email ou mot de passe incorrect', 'error');
+                showNotification('Identifiant ou mot de passe incorrect', 'error');
             }
-        }
-        
-        function handleRegister() {
-            const lastName = document.getElementById('registerLastName').value;
-            const firstName = document.getElementById('registerFirstName').value;
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-            const confirm = document.getElementById('registerConfirmPassword').value;
-            const role = document.getElementById('registerRole').value;
-            
-            if (password !== confirm) {
-                showNotification('Les mots de passe ne correspondent pas', 'error');
-                return;
-            }
-            if (appData.users.some(u => u.email === email)) {
-                showNotification('Cet email est déjà utilisé', 'error');
-                return;
-            }
-            
-            const newUser = { id: appData.users.length + 1, lastName, firstName, email, password, role, createdAt: new Date().toISOString().split('T')[0], lastLogin: new Date().toISOString().split('T')[0], isActive: true };
-            appData.users.push(newUser);
-            saveData();
-            showNotification('Compte créé avec succès !', 'success');
-            showLoginForm();
-        }
-        
-        function showLoginForm() {
-            document.getElementById('loginForm').style.display = 'block';
-            document.getElementById('registerForm').style.display = 'none';
-            document.getElementById('loginTitle').textContent = 'Connexion';
-            document.getElementById('switchText').textContent = 'Pas encore de compte ? ';
-        }
-        
-        function showRegisterForm() {
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('registerForm').style.display = 'block';
-            document.getElementById('loginTitle').textContent = 'Créer un compte';
-            document.getElementById('switchText').textContent = 'Déjà un compte ? ';
         }
         
         function handleLogout() {
@@ -1388,7 +1280,7 @@
         function updateUserInterface() {
             if (appData.currentUser) {
                 document.getElementById('userName').textContent = `${appData.currentUser.lastName} ${appData.currentUser.firstName.charAt(0)}.`;
-                document.getElementById('userRole').textContent = appData.currentUser.role === 'administrateur' ? 'Administrateur' : 'Gestionnaire';
+                document.getElementById('userRole').textContent = appData.currentUser.role === 'administrateur' ? 'Administrateur' : 'Utilisateur';
                 document.getElementById('userAvatar').textContent = `${appData.currentUser.firstName.charAt(0)}${appData.currentUser.lastName.charAt(0)}`.toUpperCase();
                 document.getElementById('profileLastName').value = appData.currentUser.lastName;
                 document.getElementById('profileFirstName').value = appData.currentUser.firstName;
@@ -1404,8 +1296,8 @@
                 if (item.dataset.section === section) item.classList.add('active');
             });
             
-            const titles = { dashboard: 'Dashboard', transactions: 'Transactions', categories: 'Catégories', reports: 'Rapports', users: 'Gestionnaires', settings: 'Paramètres' };
-            const icons = { dashboard: 'fa-tachometer-alt', transactions: 'fa-exchange-alt', categories: 'fa-tags', reports: 'fa-chart-bar', users: 'fa-users', settings: 'fa-cog' };
+            const titles = { dashboard: 'Dashboard', transactions: 'Transactions', categories: 'Catégories', reports: 'Rapports', settings: 'Paramètres' };
+            const icons = { dashboard: 'fa-tachometer-alt', transactions: 'fa-exchange-alt', categories: 'fa-tags', reports: 'fa-chart-bar', settings: 'fa-cog' };
             document.getElementById('pageTitle').textContent = titles[section];
             document.querySelector('.page-title i').className = `fas ${icons[section]}`;
             
@@ -1416,7 +1308,6 @@
             else if (section === 'transactions') loadTransactions();
             else if (section === 'categories') loadCategories();
             else if (section === 'reports') loadReports();
-            else if (section === 'users') loadUsers();
         }
         
         function loadDashboard() {
@@ -1471,7 +1362,7 @@
         function loadRecentTransactions() {
             const container = document.getElementById('recentTransactions');
             const recent = [...appData.transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
-            container.innerHTML = recent.map(t => `<tr><td>${new Date(t.date).toLocaleDateString()}</td><td>${t.description}</td><td><span class="badge ${t.type === 'income' ? 'badge-success' : 'badge-danger'}">${t.category}</span></td><td class="${t.type === 'income' ? 'text-success' : 'text-danger'}">${t.type === 'income' ? '+' : '-'} ${formatCurrency(t.amount)}</td><td><div class="action-buttons"><button class="btn-icon" onclick="editTransaction(${t.id})"><i class="fas fa-edit"></i></button>${appData.currentUser?.role === 'administrateur' ? `<button class="btn-icon" style="background: linear-gradient(135deg, var(--togo-red) 0%, #B80E2C 100%);" onclick="deleteTransaction(${t.id})"><i class="fas fa-trash"></i></button>` : ''}</div></td></tr>`).join('');
+            container.innerHTML = recent.map(t => `<tr><td>${new Date(t.date).toLocaleDateString()}</td><td>${t.description}</td><td><span class="badge ${t.type === 'income' ? 'badge-success' : 'badge-danger'}">${t.category}</span></td><td class="${t.type === 'income' ? 'text-success' : 'text-danger'}">${t.type === 'income' ? '+' : '-'} ${formatCurrency(t.amount)}</td><td><div class="action-buttons"><button class="btn-icon" onclick="editTransaction(${t.id})"><i class="fas fa-edit"></i></button><button class="btn-icon" style="background: linear-gradient(135deg, var(--togo-red) 0%, #B80E2C 100%);" onclick="deleteTransaction(${t.id})"><i class="fas fa-trash"></i></button></div></td></tr>`).join('');
         }
         
         function loadTransactions() {
@@ -1523,7 +1414,7 @@
             const container = document.getElementById('transactionsList');
             const start = (appData.currentPage - 1) * appData.preferences.pageLimit;
             const paginated = appData.filteredTransactions.slice(start, start + appData.preferences.pageLimit);
-            container.innerHTML = paginated.map(t => `<tr><td>${new Date(t.date).toLocaleDateString()}</td><td>${t.description}</td><td>${t.category}</td><td><span class="badge ${t.type === 'income' ? 'badge-success' : 'badge-danger'}">${t.type === 'income' ? 'Revenu' : 'Dépense'}</span></td><td class="${t.type === 'income' ? 'text-success' : 'text-danger'}">${t.type === 'income' ? '+' : '-'} ${formatCurrency(t.amount)}</td><td>${t.createdBy || 'Système'}</td><td><div class="action-buttons"><button class="btn-icon" onclick="editTransaction(${t.id})"><i class="fas fa-edit"></i></button>${appData.currentUser?.role === 'administrateur' ? `<button class="btn-icon" style="background: linear-gradient(135deg, var(--togo-red) 0%, #B80E2C 100%);" onclick="deleteTransaction(${t.id})"><i class="fas fa-trash"></i></button>` : ''}</div></td></tr>`).join('');
+            container.innerHTML = paginated.map(t => `<tr><td>${new Date(t.date).toLocaleDateString()}</td><td>${t.description}</td><td>${t.category}</td><td><span class="badge ${t.type === 'income' ? 'badge-success' : 'badge-danger'}">${t.type === 'income' ? 'Revenu' : 'Dépense'}</span></td><td class="${t.type === 'income' ? 'text-success' : 'text-danger'}">${t.type === 'income' ? '+' : '-'} ${formatCurrency(t.amount)}</td><td>${t.createdBy || 'Utilisateur'}</td><td><div class="action-buttons"><button class="btn-icon" onclick="editTransaction(${t.id})"><i class="fas fa-edit"></i></button><button class="btn-icon" style="background: linear-gradient(135deg, var(--togo-red) 0%, #B80E2C 100%);" onclick="deleteTransaction(${t.id})"><i class="fas fa-trash"></i></button></div></td></tr>`).join('');
             
             const totalPages = Math.ceil(appData.filteredTransactions.length / appData.preferences.pageLimit);
             const pagination = document.getElementById('transactionsPagination');
@@ -1617,14 +1508,6 @@
             details.innerHTML = Object.entries(catData).map(([cat, vals]) => `<tr><td>${cat}</td><td class="text-success">${formatCurrency(vals.income)}</td><td class="text-danger">${formatCurrency(vals.expense)}</td><td class="${vals.income - vals.expense >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(vals.income - vals.expense)}</td><td>${(((vals.income + vals.expense) / (income + expense)) * 100).toFixed(1)}%</td></tr>`).join('');
         }
         
-        function loadUsers() {
-            document.getElementById('totalUsers').textContent = appData.users.length;
-            document.getElementById('adminUsers').textContent = appData.users.filter(u => u.role === 'administrateur').length;
-            
-            const container = document.getElementById('usersList');
-            container.innerHTML = appData.users.map(user => `<tr><td>${user.lastName} ${user.firstName}</td><td>${user.email}</td><td><span class="badge ${user.role === 'administrateur' ? 'badge-warning' : 'badge-info'}">${user.role === 'administrateur' ? 'Admin' : 'Gestionnaire'}</span></td><td>${user.createdAt}</td><td><span class="badge ${user.isActive ? 'badge-success' : 'badge-danger'}">${user.isActive ? 'Actif' : 'Inactif'}</span></td><td><div class="action-buttons">${appData.currentUser?.role === 'administrateur' && appData.currentUser.id !== user.id ? `<button class="btn-icon" onclick="editUser(${user.id})"><i class="fas fa-edit"></i></button><button class="btn-icon" style="background: linear-gradient(135deg, var(--togo-red) 0%, #B80E2C 100%);" onclick="deleteUser(${user.id})"><i class="fas fa-trash"></i></button>` : ''}</div></td></tr>`).join('');
-        }
-        
         function openTransactionModal() {
             appData.editingTransactionId = null;
             document.getElementById('modalTransactionTitle').textContent = 'Nouvelle Transaction';
@@ -1632,13 +1515,6 @@
             document.getElementById('transactionDate').value = new Date().toISOString().split('T')[0];
             updateCategoryOptions();
             document.getElementById('transactionModal').classList.add('active');
-        }
-        
-        function openUserModal() {
-            appData.editingUserId = null;
-            document.getElementById('modalUserTitle').textContent = 'Nouveau Gestionnaire';
-            document.getElementById('userForm').reset();
-            document.getElementById('userModal').classList.add('active');
         }
         
         function closeModal() {
@@ -1681,42 +1557,16 @@
             else if (active === 'reports') loadReports();
         }
         
-        function saveUser() {
-            const userData = {
-                lastName: document.getElementById('userLastName').value,
-                firstName: document.getElementById('userFirstName').value,
-                email: document.getElementById('userEmail').value,
-                password: document.getElementById('userPassword').value,
-                role: document.getElementById('userRole').value,
-                isActive: true,
-                createdAt: new Date().toISOString().split('T')[0],
-                lastLogin: new Date().toISOString().split('T')[0]
-            };
-            
-            if (appData.editingUserId) {
-                const index = appData.users.findIndex(u => u.id === appData.editingUserId);
-                if (index !== -1) appData.users[index] = { ...appData.users[index], ...userData };
-                showNotification('Utilisateur modifié', 'success');
-            } else {
-                if (appData.users.some(u => u.email === userData.email)) {
-                    showNotification('Email déjà utilisé', 'error');
-                    return;
-                }
-                userData.id = appData.users.length ? Math.max(...appData.users.map(u => u.id)) + 1 : 1;
-                appData.users.push(userData);
-                showNotification('Utilisateur créé', 'success');
-            }
-            saveData();
-            closeModal();
-            loadUsers();
-        }
-        
         function updateProfile() {
             appData.currentUser.lastName = document.getElementById('profileLastName').value;
             appData.currentUser.firstName = document.getElementById('profileFirstName').value;
             appData.currentUser.email = document.getElementById('profileEmail').value;
+            
+            // Mettre à jour l'utilisateur master
             const userIndex = appData.users.findIndex(u => u.id === appData.currentUser.id);
-            if (userIndex !== -1) appData.users[userIndex] = { ...appData.users[userIndex], ...appData.currentUser };
+            if (userIndex !== -1) {
+                appData.users[userIndex] = { ...appData.users[userIndex], ...appData.currentUser };
+            }
             saveData();
             updateUserInterface();
             showNotification('Profil mis à jour', 'success');
@@ -1752,7 +1602,7 @@
         }
         
         function exportData() {
-            const data = { transactions: appData.transactions, categories: appData.categories, users: appData.users, preferences: appData.preferences, exportDate: new Date().toISOString() };
+            const data = { transactions: appData.transactions, categories: appData.categories, preferences: appData.preferences, exportDate: new Date().toISOString() };
             const link = document.createElement('a');
             link.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data, null, 2));
             link.download = `financemaster-export-${new Date().toISOString().split('T')[0]}.json`;
@@ -1830,29 +1680,6 @@
                 saveData();
                 loadCategories();
                 showNotification('Catégorie supprimée', 'success');
-            }
-        };
-        
-        window.editUser = (id) => {
-            const user = appData.users.find(u => u.id === id);
-            if (user) {
-                appData.editingUserId = id;
-                document.getElementById('modalUserTitle').textContent = 'Modifier Gestionnaire';
-                document.getElementById('userLastName').value = user.lastName;
-                document.getElementById('userFirstName').value = user.firstName;
-                document.getElementById('userEmail').value = user.email;
-                document.getElementById('userRole').value = user.role;
-                document.getElementById('userPassword').value = user.password;
-                document.getElementById('userModal').classList.add('active');
-            }
-        };
-        
-        window.deleteUser = (id) => {
-            if (confirm('Supprimer cet utilisateur ?')) {
-                appData.users = appData.users.filter(u => u.id !== id);
-                saveData();
-                loadUsers();
-                showNotification('Utilisateur supprimé', 'success');
             }
         };
     </script>
