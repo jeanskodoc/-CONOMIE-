@@ -106,6 +106,15 @@
             display: none;
         }
         
+        .login-info {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 11px;
+            color: #888;
+            border-top: 1px solid #eee;
+            padding-top: 12px;
+        }
+        
         .app-container {
             display: none;
         }
@@ -773,17 +782,13 @@
                 </div>
                 <div class="form-group">
                     <label>Mot de passe</label>
-                    <div class="password-container">
-                        <input type="password" id="password" placeholder="Votre mot de passe" required>
-                    </div>
+                    <input type="password" id="password" placeholder="Votre mot de passe" required>
                 </div>
                 <button type="submit" class="login-btn">Se connecter</button>
                 <div class="login-error" id="login-error">Identifiant ou mot de passe incorrect</div>
             </form>
-            <div style="margin-top: 15px; text-align: center; font-size: 12px; color: #666;">
-                <p>Comptes de démonstration :</p>
-                <p>Compte 1: KOLA / KOLA1@ (Solde: 500 FCFA)</p>
-                <p>Compte 2: KOLA / KOLA2@ (Solde: 500 FCFA)</p>
+            <div class="login-info">
+                <i class="fas fa-lock"></i> Connexion sécurisée
             </div>
         </div>
     </div>
@@ -797,7 +802,7 @@
                         <h1>Portefeuille Visa</h1>
                     </div>
                     <div class="user-info">
-                        <span id="user-fullname">KOLA Maniwah</span>
+                        <span id="user-fullname">Chargement...</span>
                         <div class="avatar">KM</div>
                         <button class="logout-btn" id="logout-btn">Déconnexion</button>
                     </div>
@@ -1113,17 +1118,28 @@
     </footer>
 
     <script>
-        // Constantes
-        const FEDAPAY_PAYMENT_URL = "https://me.fedapay.com/lmuOo1Nv";
-        const MAINTENANCE_FEE = 100;
-        const MIN_BALANCE_FOR_FEE = 200;
-        
-        // Comptes enregistrés
-        const registeredAccounts = [
-            {
+        // ============================================
+        // BASE DE DONNÉES INTERNE (cachée)
+        // ============================================
+        const USERS_DATABASE = (function() {
+            // Stockage interne
+            const _users = new Map();
+            
+            // Simulation de hachage simple
+            function simpleHash(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                    hash |= 0;
+                }
+                return hash.toString(16);
+            }
+            
+            // Ajout des utilisateurs
+            _users.set(1, {
                 id: 1,
-                username: "KOLA",
-                password: "KOLA1@",
+                username: "KOLA1",
+                passwordHash: simpleHash("KOLA1@"),
                 fullname: "KOLA Maniwah Essohouna",
                 phone: "+228 93 38 75 95",
                 email: "kola1@example.com",
@@ -1141,11 +1157,12 @@
                 feesHistory: [],
                 lastMaintenanceFeeDate: null,
                 pendingRecharge: null
-            },
-            {
+            });
+            
+            _users.set(2, {
                 id: 2,
-                username: "KOLA",
-                password: "KOLA2@",
+                username: "KOLA2",
+                passwordHash: simpleHash("KOLA2@"),
                 fullname: "KOLA Awa Essossinam",
                 phone: "+228 98 76 54 32",
                 email: "kola2@example.com",
@@ -1162,8 +1179,61 @@
                 feesHistory: [],
                 lastMaintenanceFeeDate: null,
                 pendingRecharge: null
-            }
-        ];
+            });
+            
+            return {
+                authenticate: function(username, password) {
+                    const hash = simpleHash(password);
+                    for (let [id, user] of _users) {
+                        if (user.username === username && user.passwordHash === hash) {
+                            // Retourner une copie sans données sensibles
+                            const { passwordHash, ...safeUser } = user;
+                            return safeUser;
+                        }
+                    }
+                    return null;
+                },
+                getUserById: function(id) {
+                    const user = _users.get(id);
+                    if (user) {
+                        const { passwordHash, ...safeUser } = user;
+                        return safeUser;
+                    }
+                    return null;
+                },
+                updateUser: function(id, updatedData) {
+                    const user = _users.get(id);
+                    if (user) {
+                        Object.assign(user, updatedData);
+                        return true;
+                    }
+                    return false;
+                },
+                saveToLocalStorage: function(id, dynamicData) {
+                    this.updateUser(id, dynamicData);
+                    localStorage.setItem(`financeUser_${id}`, JSON.stringify(dynamicData));
+                },
+                loadFromLocalStorage: function(id) {
+                    const saved = localStorage.getItem(`financeUser_${id}`);
+                    if (saved) {
+                        try {
+                            const data = JSON.parse(saved);
+                            this.updateUser(id, data);
+                        } catch(e) {}
+                    }
+                    return this.getUserById(id);
+                }
+            };
+        })();
+        
+        // ============================================
+        // APPLICATION
+        // ============================================
+        
+        // Constantes
+        const FEDAPAY_PAYMENT_URL = "https://me.fedapay.com/lmuOo1Nv";
+        const MAINTENANCE_FEE = 100;
+        const MIN_BALANCE_FOR_FEE = 200;
         
         let currentUser = null;
         let isLoggedIn = false;
@@ -1187,7 +1257,6 @@
         const userFullnameSpan = document.getElementById('user-fullname');
         const userAvatar = document.getElementById('user-avatar');
         const cardHolder = document.getElementById('card-holder');
-        const cardHolderGold = document.getElementById('card-holder-gold');
         
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
@@ -1310,7 +1379,7 @@
             window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
             showNotif(`Frais d'entretien mensuel de ${formatCurrency(feeAmount)} prélevés`, 'warning');
             
-            saveData();
+            saveToDatabase();
             return true;
         }
         
@@ -1365,17 +1434,14 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             
-            // Chercher l'utilisateur dans les comptes enregistrés
-            const user = registeredAccounts.find(account => 
-                account.username === username && account.password === password
-            );
+            const user = USERS_DATABASE.authenticate(username, password);
             
             if (user) {
                 currentUser = user;
                 isLoggedIn = true;
                 showApp();
                 loginError.style.display = 'none';
-                saveData();
+                saveToDatabase();
                 checkAndApplyMaintenanceFee();
             } else {
                 loginError.style.display = 'block';
@@ -1391,7 +1457,7 @@
         function handleLogout() {
             isLoggedIn = false;
             currentUser = null;
-            saveData();
+            saveToDatabase();
             loginContainer.style.display = 'flex';
             appContainer.style.display = 'none';
             document.getElementById('login-form').reset();
@@ -1405,14 +1471,16 @@
             userFullnameSpan.textContent = currentUser.fullname;
             userAvatar.textContent = initials;
             balanceAmount.textContent = formatCurrency(currentUser.balance);
-            document.getElementById('solde-achat').textContent = formatCurrency(currentUser.balance);
-            document.getElementById('solde-retrait').textContent = formatCurrency(currentUser.balance);
-            document.getElementById('solde-send').textContent = formatCurrency(currentUser.balance);
             
-            // Mettre à jour les cartes
+            const soldeAchat = document.getElementById('solde-achat');
+            const soldeRetrait = document.getElementById('solde-retrait');
+            const soldeSend = document.getElementById('solde-send');
+            if (soldeAchat) soldeAchat.textContent = formatCurrency(currentUser.balance);
+            if (soldeRetrait) soldeRetrait.textContent = formatCurrency(currentUser.balance);
+            if (soldeSend) soldeSend.textContent = formatCurrency(currentUser.balance);
+            
             const cardInitials = currentUser.fullname.split(' ').map(n => n[0]).join('').toUpperCase();
-            cardHolder.textContent = cardInitials;
-            cardHolderGold.textContent = cardInitials;
+            if (cardHolder) cardHolder.textContent = cardInitials;
             
             updateStatistics();
             renderTransactions();
@@ -1422,6 +1490,7 @@
         }
         
         function renderTransactions() {
+            if (!transactionList) return;
             transactionList.innerHTML = '';
             const recent = [...currentUser.transactions].reverse().slice(0, 10);
             recent.forEach(t => {
@@ -1441,6 +1510,7 @@
         }
         
         function renderFamilyMembers() {
+            if (!familyMembersGrid) return;
             familyMembersGrid.innerHTML = '';
             currentUser.familyMembers.forEach(m => {
                 const card = document.createElement('div');
@@ -1468,8 +1538,11 @@
             });
             const income = monthTransactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
             const expense = monthTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
-            document.getElementById('month-income').textContent = formatCurrency(income);
-            document.getElementById('month-expense').textContent = formatCurrency(expense);
+            
+            const monthIncome = document.getElementById('month-income');
+            const monthExpense = document.getElementById('month-expense');
+            if (monthIncome) monthIncome.textContent = formatCurrency(income);
+            if (monthExpense) monthExpense.textContent = formatCurrency(expense);
         }
         
         function updateRetraitFees() {
@@ -1477,12 +1550,18 @@
             if (montant > 0) {
                 const frais = Math.round(montant * 0.09);
                 const total = montant + frais;
-                document.getElementById('retrait-montant-display').textContent = formatCurrency(montant);
-                document.getElementById('retrait-frais-display').textContent = formatCurrency(frais);
-                document.getElementById('retrait-total-display').textContent = formatCurrency(total);
-                document.getElementById('retrait-fees-info').style.display = 'block';
+                const retraitMontantDisplay = document.getElementById('retrait-montant-display');
+                const retraitFraisDisplay = document.getElementById('retrait-frais-display');
+                const retraitTotalDisplay = document.getElementById('retrait-total-display');
+                const retraitFeesInfo = document.getElementById('retrait-fees-info');
+                
+                if (retraitMontantDisplay) retraitMontantDisplay.textContent = formatCurrency(montant);
+                if (retraitFraisDisplay) retraitFraisDisplay.textContent = formatCurrency(frais);
+                if (retraitTotalDisplay) retraitTotalDisplay.textContent = formatCurrency(total);
+                if (retraitFeesInfo) retraitFeesInfo.style.display = 'block';
             } else {
-                document.getElementById('retrait-fees-info').style.display = 'none';
+                const retraitFeesInfo = document.getElementById('retrait-fees-info');
+                if (retraitFeesInfo) retraitFeesInfo.style.display = 'none';
             }
         }
         
@@ -1507,7 +1586,7 @@
             
             pendingPaymentAmount = montantInt;
             currentUser.pendingRecharge = montantInt;
-            saveData();
+            saveToDatabase();
             
             sessionStorage.setItem('pendingRecharge', montantInt);
             sessionStorage.setItem('userEmail', currentUser.email);
@@ -1533,34 +1612,41 @@
         }
         
         function showWhatsAppPaymentForm(montant, frais, net) {
+            if (!whatsappPaymentSection) return;
             whatsappPaymentSection.style.display = 'block';
             
-            paymentSummary.innerHTML = `
-                <div class="payment-summary-item">
-                    <span>💰 Montant saisi :</span>
-                    <strong>${formatCurrency(montant)}</strong>
-                </div>
-                <div class="payment-summary-item">
-                    <span>📊 Frais de recharge (5%) :</span>
-                    <strong>${formatCurrency(frais)}</strong>
-                </div>
-                <div class="payment-summary-item">
-                    <span>✨ Montant net crédité :</span>
-                    <strong style="color: #388e3c;">${formatCurrency(net)}</strong>
-                </div>
-                <div class="payment-summary-item">
-                    <span>💵 Ancien solde :</span>
-                    <strong>${formatCurrency(currentUser.balance)}</strong>
-                </div>
-                <div class="payment-summary-item">
-                    <span>💵 Nouveau solde après crédit :</span>
-                    <strong style="color: #0066CC;">${formatCurrency(currentUser.balance + net)}</strong>
-                </div>
-            `;
+            if (paymentSummary) {
+                paymentSummary.innerHTML = `
+                    <div class="payment-summary-item">
+                        <span>💰 Montant saisi :</span>
+                        <strong>${formatCurrency(montant)}</strong>
+                    </div>
+                    <div class="payment-summary-item">
+                        <span>📊 Frais de recharge (5%) :</span>
+                        <strong>${formatCurrency(frais)}</strong>
+                    </div>
+                    <div class="payment-summary-item">
+                        <span>✨ Montant net crédité :</span>
+                        <strong style="color: #388e3c;">${formatCurrency(net)}</strong>
+                    </div>
+                    <div class="payment-summary-item">
+                        <span>💵 Ancien solde :</span>
+                        <strong>${formatCurrency(currentUser.balance)}</strong>
+                    </div>
+                    <div class="payment-summary-item">
+                        <span>💵 Nouveau solde après crédit :</span>
+                        <strong style="color: #0066CC;">${formatCurrency(currentUser.balance + net)}</strong>
+                    </div>
+                `;
+            }
             
-            document.getElementById('whatsapp-phone').value = currentUser.phone;
-            document.getElementById('whatsapp-name').value = currentUser.fullname;
-            document.getElementById('whatsapp-email').value = currentUser.email;
+            const whatsappPhone = document.getElementById('whatsapp-phone');
+            const whatsappName = document.getElementById('whatsapp-name');
+            const whatsappEmail = document.getElementById('whatsapp-email');
+            
+            if (whatsappPhone) whatsappPhone.value = currentUser.phone;
+            if (whatsappName) whatsappName.value = currentUser.fullname;
+            if (whatsappEmail) whatsappEmail.value = currentUser.email;
             
             generatePaymentQRCode(montant, frais, net);
             whatsappPaymentSection.scrollIntoView({ behavior: 'smooth' });
@@ -1568,9 +1654,13 @@
         }
         
         function generatePaymentQRCode(montant, frais, net) {
-            const phone = document.getElementById('whatsapp-phone').value || currentUser.phone;
-            const name = document.getElementById('whatsapp-name').value || currentUser.fullname;
-            const email = document.getElementById('whatsapp-email').value || currentUser.email;
+            const phoneInput = document.getElementById('whatsapp-phone');
+            const nameInput = document.getElementById('whatsapp-name');
+            const emailInput = document.getElementById('whatsapp-email');
+            
+            const phone = (phoneInput ? phoneInput.value : currentUser.phone) || currentUser.phone;
+            const name = (nameInput ? nameInput.value : currentUser.fullname) || currentUser.fullname;
+            const email = (emailInput ? emailInput.value : currentUser.email) || currentUser.email;
             
             const message = `✅ CONFIRMATION DE PAIEMENT FEDAPAY%0A%0A` +
                 `👤 Client: ${name}%0A` +
@@ -1587,18 +1677,21 @@
             const whatsappUrl = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${message}`;
             
             const qrcodeContainer = document.getElementById('payment-qrcode');
-            qrcodeContainer.innerHTML = '';
-            
-            if (typeof QRCode !== 'undefined') {
-                new QRCode(qrcodeContainer, {
-                    text: whatsappUrl,
-                    width: 180,
-                    height: 180,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-                document.getElementById('qr-code-container').style.display = 'block';
+            if (qrcodeContainer) {
+                qrcodeContainer.innerHTML = '';
+                
+                if (typeof QRCode !== 'undefined') {
+                    new QRCode(qrcodeContainer, {
+                        text: whatsappUrl,
+                        width: 180,
+                        height: 180,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                    const qrContainer = document.getElementById('qr-code-container');
+                    if (qrContainer) qrContainer.style.display = 'block';
+                }
             }
         }
         
@@ -1611,9 +1704,13 @@
             
             const frais = Math.round(montant * 0.05);
             const net = montant - frais;
-            const phone = document.getElementById('whatsapp-phone').value;
-            const name = document.getElementById('whatsapp-name').value;
-            const email = document.getElementById('whatsapp-email').value;
+            const phoneInput = document.getElementById('whatsapp-phone');
+            const nameInput = document.getElementById('whatsapp-name');
+            const emailInput = document.getElementById('whatsapp-email');
+            
+            const phone = phoneInput ? phoneInput.value : currentUser.phone;
+            const name = nameInput ? nameInput.value : currentUser.fullname;
+            const email = emailInput ? emailInput.value : currentUser.email;
             
             if (!phone) {
                 alert("Veuillez entrer votre numéro WhatsApp");
@@ -1630,7 +1727,7 @@
             });
             
             updateUI();
-            saveData();
+            saveToDatabase();
             
             const message = `✅ CONFIRMATION DE PAIEMENT FEDAPAY - VALIDÉ%0A%0A` +
                 `👤 Client: ${name}%0A` +
@@ -1648,7 +1745,7 @@
             const whatsappUrl = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${message}`;
             window.open(whatsappUrl, '_blank');
             
-            whatsappPaymentSection.style.display = 'none';
+            if (whatsappPaymentSection) whatsappPaymentSection.style.display = 'none';
             pendingPaymentAmount = null;
             
             showNotif(`✅ ${formatCurrency(net)} crédité sur votre compte !`, 'success');
@@ -1685,7 +1782,7 @@
             window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
             
             updateUI();
-            saveData();
+            saveToDatabase();
             closeAllModals();
             showNotif(`Achat de ${formatCurrency(montant)} effectué !`, 'success');
         }
@@ -1716,7 +1813,7 @@
             window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
             
             updateUI();
-            saveData();
+            saveToDatabase();
             closeAllModals();
             showNotif(`${formatCurrency(montant)} reçu de ${expediteur} !`, 'success');
         }
@@ -1754,7 +1851,7 @@
             window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
             
             updateUI();
-            saveData();
+            saveToDatabase();
             closeAllModals();
             showNotif(`Demande de retrait de ${formatCurrency(montant)} envoyée !`, 'success');
         }
@@ -1792,7 +1889,7 @@
             window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
             
             updateUI();
-            saveData();
+            saveToDatabase();
             closeAllModals();
             showNotif(`${formatCurrency(montant)} envoyé à ${name} !`, 'success');
         }
@@ -1811,20 +1908,23 @@
             });
             
             renderFamilyMembers();
-            saveData();
+            saveToDatabase();
             closeAllModals();
             showNotif(`${name} ajouté à votre famille !`, 'success');
         }
         
-        function quickSend(phone, name) {
+        window.quickSend = function(phone, name) {
             openModal('send-modal');
-            document.getElementById('send-phone').value = phone;
-            document.getElementById('send-name').value = name;
-        }
+            const sendPhone = document.getElementById('send-phone');
+            const sendName = document.getElementById('send-name');
+            if (sendPhone) sendPhone.value = phone;
+            if (sendName) sendName.value = name;
+        };
         
         function openModal(modalId) {
             closeAllModals();
-            document.getElementById(modalId).style.display = 'flex';
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'flex';
         }
         
         function closeAllModals() {
@@ -1845,18 +1945,29 @@
         }
         
         function showNotif(message, type) {
+            if (!saveNotification) return;
             saveNotification.className = `save-notification notification-${type}`;
             saveNotification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i> ${message}`;
             saveNotification.style.display = 'block';
-            setTimeout(() => saveNotification.style.display = 'none', 3000);
+            setTimeout(() => {
+                if (saveNotification) saveNotification.style.display = 'none';
+            }, 3000);
         }
         
-        function saveData() {
+        function saveToDatabase() {
             if (currentUser) {
-                localStorage.setItem(`financeUser_${currentUser.id}`, JSON.stringify(currentUser));
-                localStorage.setItem('currentUserId', currentUser.id);
+                const dynamicData = {
+                    balance: currentUser.balance,
+                    transactions: currentUser.transactions,
+                    familyMembers: currentUser.familyMembers,
+                    feesHistory: currentUser.feesHistory,
+                    lastMaintenanceFeeDate: currentUser.lastMaintenanceFeeDate,
+                    pendingRecharge: currentUser.pendingRecharge
+                };
+                USERS_DATABASE.saveToLocalStorage(currentUser.id, dynamicData);
             }
             localStorage.setItem('isLoggedIn', isLoggedIn);
+            if (currentUser) localStorage.setItem('currentUserId', currentUser.id);
         }
         
         function loadData() {
@@ -1864,22 +1975,13 @@
             const isLoggedInSaved = localStorage.getItem('isLoggedIn') === 'true';
             
             if (savedUserId && isLoggedInSaved) {
-                const savedUser = localStorage.getItem(`financeUser_${savedUserId}`);
-                if (savedUser) {
-                    try {
-                        const userData = JSON.parse(savedUser);
-                        const originalUser = registeredAccounts.find(u => u.id === userData.id);
-                        if (originalUser) {
-                            Object.assign(originalUser, userData);
-                            currentUser = originalUser;
-                            isLoggedIn = true;
-                        }
-                    } catch(e) {}
+                const user = USERS_DATABASE.loadFromLocalStorage(parseInt(savedUserId));
+                if (user) {
+                    currentUser = user;
+                    isLoggedIn = true;
                 }
             }
         }
-        
-        window.quickSend = quickSend;
     </script>
 </body>
 </html>
