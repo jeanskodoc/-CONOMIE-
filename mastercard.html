@@ -327,32 +327,6 @@
             right: 15px;
             font-weight: bold;
             font-size: 1.3rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .mastercard-logo {
-            font-weight: bold;
-            font-size: 1.5rem;
-            color: white;
-            display: flex;
-            align-items: center;
-        }
-        
-        .mastercard-circle {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            margin-right: 2px;
-        }
-        
-        .mastercard-red {
-            background-color: var(--mastercard-red);
-        }
-        
-        .mastercard-orange {
-            background-color: var(--mastercard-orange);
         }
         
         .card-flag {
@@ -451,11 +425,6 @@
         
         .btn-info {
             background-color: var(--info-color);
-            color: white;
-        }
-        
-        .btn-success {
-            background-color: var(--success-color);
             color: white;
         }
         
@@ -578,20 +547,6 @@
             margin-top: 15px;
         }
         
-        .qrcode-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 15px 0;
-            padding: 15px;
-            border: 1px dashed #ddd;
-            border-radius: 10px;
-        }
-        
-        #qrcode {
-            margin: 12px 0;
-        }
-        
         .whatsapp-info {
             background-color: #25D366;
             color: white;
@@ -622,6 +577,8 @@
             font-weight: 500;
             transition: all 0.3s ease;
             font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
         }
         
         .fedapay-btn:hover {
@@ -695,37 +652,6 @@
         
         .transaction-tab-content.active {
             display: block;
-        }
-        
-        .account-info {
-            background-color: #ffe6e9;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-        
-        .account-info h3 {
-            margin-bottom: 8px;
-            color: var(--mastercard-red);
-            font-size: 1.1rem;
-        }
-        
-        .info-row {
-            display: flex;
-            margin-bottom: 6px;
-            flex-direction: column;
-        }
-        
-        @media (min-width: 480px) {
-            .info-row {
-                flex-direction: row;
-            }
-        }
-        
-        .info-label {
-            font-weight: bold;
-            width: 150px;
-            font-size: 0.9rem;
         }
         
         .solde-actuel {
@@ -814,16 +740,6 @@
             border-bottom: none;
         }
         
-        .auto-fee-notice {
-            background: rgba(255, 193, 7, 0.1);
-            border: 1px solid #ffc107;
-            border-radius: 5px;
-            padding: 8px 12px;
-            margin: 10px 0;
-            font-size: 0.85rem;
-            color: #856404;
-        }
-        
         .balance-loading {
             display: inline-block;
             width: 20px;
@@ -856,6 +772,16 @@
             border: none;
             cursor: pointer;
             color: #777;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
         }
         
         @media (max-width: 768px) {
@@ -1161,7 +1087,6 @@
         const loginForm = document.getElementById('login-form');
         const loginError = document.getElementById('login-error');
         const logoutBtn = document.getElementById('logout-btn');
-        const balanceAmount = document.getElementById('balance-amount');
         const balanceText = document.getElementById('balance-text');
         const balanceLoading = document.getElementById('balance-loading');
         const transactionList = document.getElementById('transaction-list');
@@ -1173,6 +1098,15 @@
         const userAvatar = document.getElementById('user-avatar');
         const cardHolder = document.getElementById('card-holder');
         const cardHolderGold = document.getElementById('card-holder-gold');
+        const monthIncome = document.getElementById('month-income');
+        const monthExpense = document.getElementById('month-expense');
+        const soldeAchat = document.getElementById('solde-achat');
+        const soldeRetrait = document.getElementById('solde-retrait');
+        const retraitMontant = document.getElementById('retrait-montant');
+        const retraitMontantDisplay = document.getElementById('retrait-montant-display');
+        const retraitFraisDisplay = document.getElementById('retrait-frais-display');
+        const retraitTotalDisplay = document.getElementById('retrait-total-display');
+        const retraitFeesInfo = document.getElementById('retrait-fees-info');
         
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
@@ -1195,25 +1129,37 @@
                     document.querySelectorAll('.transaction-tab').forEach(t => t.classList.remove('active'));
                     document.querySelectorAll('.transaction-tab-content').forEach(c => c.classList.remove('active'));
                     this.classList.add('active');
-                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                    const activeTab = document.getElementById(`${tabId}-tab`);
+                    if (activeTab) activeTab.classList.add('active');
                 });
             });
             
-            document.getElementById('fedapay-recharge-btn').addEventListener('click', handleFedaPayPayment);
+            const fedapayBtn = document.getElementById('fedapay-recharge-btn');
+            if (fedapayBtn) fedapayBtn.addEventListener('click', handleFedaPayPayment);
             
-            document.getElementById('achat-btn').addEventListener('click', () => openModal('achat-modal'));
-            document.getElementById('recevoir-btn').addEventListener('click', () => openModal('recevoir-modal'));
-            document.getElementById('retrait-btn').addEventListener('click', () => openModal('retrait-modal'));
+            const achatBtn = document.getElementById('achat-btn');
+            if (achatBtn) achatBtn.addEventListener('click', () => openModal('achat-modal'));
+            
+            const recevoirBtn = document.getElementById('recevoir-btn');
+            if (recevoirBtn) recevoirBtn.addEventListener('click', () => openModal('recevoir-modal'));
+            
+            const retraitBtn = document.getElementById('retrait-btn');
+            if (retraitBtn) retraitBtn.addEventListener('click', () => openModal('retrait-modal'));
             
             document.querySelectorAll('.close-modal').forEach(btn => {
                 btn.addEventListener('click', () => closeAllModals());
             });
             
-            document.getElementById('achat-form').addEventListener('submit', handleAchat);
-            document.getElementById('recevoir-form').addEventListener('submit', handleRecevoir);
-            document.getElementById('retrait-form').addEventListener('submit', handleRetrait);
+            const achatForm = document.getElementById('achat-form');
+            if (achatForm) achatForm.addEventListener('submit', handleAchat);
             
-            document.getElementById('retrait-montant').addEventListener('input', updateRetraitFees);
+            const recevoirForm = document.getElementById('recevoir-form');
+            if (recevoirForm) recevoirForm.addEventListener('submit', handleRecevoir);
+            
+            const retraitForm = document.getElementById('retrait-form');
+            if (retraitForm) retraitForm.addEventListener('submit', handleRetrait);
+            
+            if (retraitMontant) retraitMontant.addEventListener('input', updateRetraitFees);
             
             // Vérifier les frais toutes les heures
             setInterval(() => {
@@ -1299,6 +1245,8 @@
         }
         
         function updateFeeStatusDisplay(feeApplied) {
+            if (!feeStatusBadge || !maintenanceFeeInfo) return;
+            
             const now = new Date();
             const monthName = now.toLocaleString('fr-FR', { month: 'long' });
             
@@ -1371,7 +1319,8 @@
             saveData();
             loginContainer.style.display = 'flex';
             appContainer.style.display = 'none';
-            document.getElementById('login-form').reset();
+            const loginFormElement = document.getElementById('login-form');
+            if (loginFormElement) loginFormElement.reset();
             showNotif('Déconnexion réussie', 'info');
         }
         
@@ -1379,11 +1328,12 @@
             if (!currentUser) return;
             
             const initials = currentUser.fullname.split(' ').map(n => n[0]).join('').toUpperCase();
-            userFullnameSpan.textContent = currentUser.fullname;
-            userAvatar.textContent = initials;
-            balanceText.textContent = formatCurrency(currentUser.balance);
-            document.getElementById('solde-achat').textContent = formatCurrency(currentUser.balance);
-            document.getElementById('solde-retrait').textContent = formatCurrency(currentUser.balance);
+            if (userFullnameSpan) userFullnameSpan.textContent = currentUser.fullname;
+            if (userAvatar) userAvatar.textContent = initials;
+            if (balanceText) balanceText.textContent = formatCurrency(currentUser.balance);
+            if (balanceLoading) balanceLoading.style.display = 'none';
+            if (soldeAchat) soldeAchat.textContent = formatCurrency(currentUser.balance);
+            if (soldeRetrait) soldeRetrait.textContent = formatCurrency(currentUser.balance);
             
             const cardInitials = currentUser.fullname.split(' ').map(n => n[0]).join('').toUpperCase();
             if (cardHolder) cardHolder.textContent = cardInitials;
@@ -1396,6 +1346,7 @@
         }
         
         function renderTransactions() {
+            if (!transactionList) return;
             transactionList.innerHTML = '';
             const recent = [...currentUser.transactions].reverse().slice(0, 10);
             recent.forEach(t => {
@@ -1415,6 +1366,8 @@
         }
         
         function updateStatistics() {
+            if (!monthIncome || !monthExpense) return;
+            
             const now = new Date();
             const monthTransactions = currentUser.transactions.filter(t => {
                 const d = new Date(t.date);
@@ -1422,26 +1375,29 @@
             });
             const income = monthTransactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
             const expense = monthTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
-            document.getElementById('month-income').textContent = formatCurrency(income);
-            document.getElementById('month-expense').textContent = formatCurrency(expense);
+            monthIncome.textContent = formatCurrency(income);
+            monthExpense.textContent = formatCurrency(expense);
         }
         
         function updateRetraitFees() {
-            const montant = parseInt(document.getElementById('retrait-montant').value) || 0;
+            if (!retraitMontant) return;
+            const montant = parseInt(retraitMontant.value) || 0;
             if (montant > 0) {
                 const frais = Math.round(montant * WITHDRAWAL_FEE_PERCENTAGE);
                 const total = montant + frais;
-                document.getElementById('retrait-montant-display').textContent = formatCurrency(montant);
-                document.getElementById('retrait-frais-display').textContent = formatCurrency(frais);
-                document.getElementById('retrait-total-display').textContent = formatCurrency(total);
-                document.getElementById('retrait-fees-info').style.display = 'block';
+                if (retraitMontantDisplay) retraitMontantDisplay.textContent = formatCurrency(montant);
+                if (retraitFraisDisplay) retraitFraisDisplay.textContent = formatCurrency(frais);
+                if (retraitTotalDisplay) retraitTotalDisplay.textContent = formatCurrency(total);
+                if (retraitFeesInfo) retraitFeesInfo.style.display = 'block';
             } else {
-                document.getElementById('retrait-fees-info').style.display = 'none';
+                if (retraitFeesInfo) retraitFeesInfo.style.display = 'none';
             }
         }
         
         function handleFedaPayPayment() {
             const btn = document.getElementById('fedapay-recharge-btn');
+            if (!btn) return;
+            
             const originalText = btn.innerHTML;
             btn.innerHTML = '<div class="loading-spinner"></div> Chargement...';
             btn.disabled = true;
@@ -1511,9 +1467,15 @@
         
         function handleAchat(e) {
             e.preventDefault();
-            const commercant = document.getElementById('commercant-nom').value;
-            const montant = parseInt(document.getElementById('achat-montant').value);
-            const description = document.getElementById('achat-description').value || "Achat";
+            const commercant = document.getElementById('commercant-nom');
+            const montantInput = document.getElementById('achat-montant');
+            const description = document.getElementById('achat-description');
+            
+            if (!commercant || !montantInput) return;
+            
+            const commercantNom = commercant.value;
+            const montant = parseInt(montantInput.value);
+            const descriptionText = description ? description.value || "Achat" : "Achat";
             
             if (montant > currentUser.balance) {
                 alert("Solde insuffisant");
@@ -1523,7 +1485,7 @@
             currentUser.balance -= montant;
             currentUser.transactions.unshift({
                 id: Date.now(),
-                name: `Achat chez ${commercant} - ${description}`,
+                name: `Achat chez ${commercantNom} - ${descriptionText}`,
                 amount: -montant,
                 date: new Date(),
                 type: "expense"
@@ -1531,8 +1493,8 @@
             
             const msg = `🛒 ACHAT EFFECTUÉ%0A%0A` +
                 `👤 Client: ${currentUser.fullname}%0A` +
-                `🏪 Commerçant: ${commercant}%0A` +
-                `📝 Description: ${description}%0A` +
+                `🏪 Commerçant: ${commercantNom}%0A` +
+                `📝 Description: ${descriptionText}%0A` +
                 `💰 Montant: ${formatCurrency(montant)}%0A` +
                 `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
                 `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
@@ -1547,14 +1509,20 @@
         
         function handleRecevoir(e) {
             e.preventDefault();
-            const expediteur = document.getElementById('expediteur-nom').value;
-            const phone = document.getElementById('expediteur-phone').value;
-            const montant = parseInt(document.getElementById('recevoir-montant').value);
+            const expediteur = document.getElementById('expediteur-nom');
+            const phone = document.getElementById('expediteur-phone');
+            const montantInput = document.getElementById('recevoir-montant');
+            
+            if (!expediteur || !phone || !montantInput) return;
+            
+            const expediteurNom = expediteur.value;
+            const expediteurPhone = phone.value;
+            const montant = parseInt(montantInput.value);
             
             currentUser.balance += montant;
             currentUser.transactions.unshift({
                 id: Date.now(),
-                name: `Réception de ${expediteur}`,
+                name: `Réception de ${expediteurNom}`,
                 amount: montant,
                 date: new Date(),
                 type: "income"
@@ -1562,8 +1530,8 @@
             
             const msg = `📥 RÉCEPTION D'ARGENT%0A%0A` +
                 `👤 Bénéficiaire: ${currentUser.fullname}%0A` +
-                `📤 Expéditeur: ${expediteur}%0A` +
-                `📞 Téléphone expéditeur: ${phone}%0A` +
+                `📤 Expéditeur: ${expediteurNom}%0A` +
+                `📞 Téléphone expéditeur: ${expediteurPhone}%0A` +
                 `💰 Montant reçu: ${formatCurrency(montant)}%0A` +
                 `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
                 `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
@@ -1573,13 +1541,18 @@
             updateUI();
             saveData();
             closeAllModals();
-            showNotif(`${formatCurrency(montant)} reçu de ${expediteur} !`, 'success');
+            showNotif(`${formatCurrency(montant)} reçu de ${expediteurNom} !`, 'success');
         }
         
         function handleRetrait(e) {
             e.preventDefault();
-            const montant = parseInt(document.getElementById('retrait-montant').value);
-            const numero = document.getElementById('retrait-numero').value;
+            const montantInput = document.getElementById('retrait-montant');
+            const numero = document.getElementById('retrait-numero');
+            
+            if (!montantInput || !numero) return;
+            
+            const montant = parseInt(montantInput.value);
+            const numeroReception = numero.value;
             const frais = Math.round(montant * WITHDRAWAL_FEE_PERCENTAGE);
             const total = montant + frais;
             
@@ -1602,7 +1575,7 @@
                 `💰 Montant demandé: ${formatCurrency(montant)}%0A` +
                 `📊 Frais (25%): ${formatCurrency(frais)}%0A` +
                 `💳 Total débité: ${formatCurrency(total)}%0A` +
-                `📞 Numéro de réception: ${numero}%0A` +
+                `📞 Numéro de réception: ${numeroReception}%0A` +
                 `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
                 `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
             
@@ -1616,7 +1589,8 @@
         
         function openModal(modalId) {
             closeAllModals();
-            document.getElementById(modalId).style.display = 'flex';
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'flex';
         }
         
         function closeAllModals() {
@@ -1637,10 +1611,13 @@
         }
         
         function showNotif(message, type) {
+            if (!saveNotification) return;
             saveNotification.className = `save-notification notification-${type}`;
             saveNotification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i> ${message}`;
             saveNotification.style.display = 'block';
-            setTimeout(() => saveNotification.style.display = 'none', 3000);
+            setTimeout(() => {
+                if (saveNotification) saveNotification.style.display = 'none';
+            }, 3000);
         }
         
         function saveData() {
