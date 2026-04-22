@@ -220,6 +220,7 @@
         .feature-2 i { background: var(--gradient-secondary); }
         .feature-3 i { background: var(--gradient-accent); }
         .feature-4 i { background: linear-gradient(135deg, var(--togo-vert) 0%, var(--togo-jaune) 100%); }
+        .feature-5 i { background: linear-gradient(135deg, var(--togo-rouge) 0%, var(--togo-jaune) 100%); }
 
         .feature-content h3 {
             font-size: 1.1rem;
@@ -243,19 +244,20 @@
             background: var(--togo-blanc);
             border-radius: var(--border-radius) var(--border-radius) 0 0;
             box-shadow: var(--box-shadow);
-            overflow: hidden;
+            overflow-x: auto;
             border-bottom: 2px solid #e2e8f0;
         }
         
         .tab {
             flex: 1;
+            min-width: 100px;
             padding: 15px 8px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
             border-bottom: 3px solid transparent;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.9rem;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -286,6 +288,16 @@
         .tab.active.mastercard-tab {
             background: var(--mastercard-gradient);
             border-bottom-color: #eb001b;
+        }
+        
+        .tab.active.commande-tab {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            border-bottom-color: #f39c12;
+        }
+        
+        .tab.active.partenaires-tab {
+            background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+            border-bottom-color: #8e44ad;
         }
         
         .tab i {
@@ -347,7 +359,7 @@
             line-height: 1.6;
         }
         
-        /* Boutons réduits */
+        /* Boutons */
         .tab-content .btn {
             display: inline-flex;
             align-items: center;
@@ -394,6 +406,22 @@
         #mastercard-tab-content .btn {
             background: var(--mastercard-gradient);
         }
+        
+        #commande-tab-content .app-icon {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+        
+        #commande-tab-content .btn {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+        
+        #partenaires-tab-content .app-icon {
+            background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+        }
+        
+        #partenaires-tab-content .btn {
+            background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+        }
 
         .card-badges {
             display: flex;
@@ -421,7 +449,109 @@
             color: #eb001b;
             border: 1px solid #eb001b;
         }
+        
+        .commande-badge {
+            background: #fff3e0;
+            color: #e67e22;
+            border: 1px solid #e67e22;
+        }
+        
+        .partenaires-badge {
+            background: #f3e8ff;
+            color: #8e44ad;
+            border: 1px solid #8e44ad;
+        }
 
+        /* Style pour les partenaires */
+        .partenaires-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        .categorie-partenaires {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
+        }
+        
+        .categorie-titre {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--togo-vert);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--togo-jaune);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .categorie-titre i {
+            color: var(--togo-vert);
+        }
+        
+        .boutique-liste {
+            list-style: none;
+        }
+        
+        .boutique-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .boutique-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .boutique-icon {
+            width: 45px;
+            height: 45px;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .boutique-info {
+            flex: 1;
+        }
+        
+        .boutique-nom {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-color);
+        }
+        
+        .boutique-adresse {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 3px;
+        }
+        
+        .boutique-remise {
+            background: var(--togo-jaune);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--togo-vert);
+        }
+        
         .stats-section {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -492,7 +622,6 @@
             flex-wrap: wrap;
         }
         
-        /* Boutons réduits dans la section CTA */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -527,9 +656,21 @@
             background: var(--mastercard-gradient);
         }
         
+        .btn-commande {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+        
+        .btn-partenaires {
+            background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+        }
+        
         .btn-large {
             padding: 14px 25px;
             font-size: 1rem;
+        }
+        
+        .btn-inscription {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
         }
 
         footer {
@@ -576,16 +717,18 @@
             }
             
             .tabs-header {
-                flex-direction: column;
+                flex-direction: row;
+                overflow-x: auto;
             }
             
             .tab {
-                padding: 12px;
-                border-bottom: 1px solid #e2e8f0;
-                border-right: none;
-                flex-direction: row;
-                justify-content: center;
-                gap: 12px;
+                min-width: 90px;
+                padding: 10px 5px;
+                font-size: 0.8rem;
+            }
+            
+            .tab i {
+                font-size: 1.1rem;
             }
             
             .tabs-content {
@@ -615,6 +758,10 @@
             
             .tab-content .btn {
                 min-width: 200px;
+            }
+            
+            .partenaires-grid {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -649,6 +796,11 @@
                 flex-wrap: wrap;
                 gap: 8px;
             }
+            
+            .boutique-item {
+                flex-direction: column;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -675,6 +827,9 @@
                 <p>Découvrez notre écosystème financier digital, conçu spécialement pour les togolais afin de prendre le contrôle complet de vos finances personnelles.</p>
                 <p>Avec une interface intuitive et des fonctionnalités adaptées à nos besoins locaux, vous pouvez désormais gérer votre budget, suivre vos transactions et effectuer des paiements en toute sécurité.</p>
                 <p>Que vous soyez étudiant, professionnel ou chef de famille, nos applications s'adaptent à vos besoins pour une gestion financière optimale au Togo.</p>
+                <button class="btn btn-inscription" style="margin-top: 15px;" onclick="window.location.href='inscription.html'">
+                    <i class="fas fa-user-plus"></i> S'enregistrer
+                </button>
             </div>
 
             <div class="features-card">
@@ -708,11 +863,18 @@
                             <p>Vos données sont sauvegardées localement et protégées par authentification</p>
                         </div>
                     </li>
+                    <li class="feature-5">
+                        <i class="fas fa-store"></i>
+                        <div class="feature-content">
+                            <h3>Réseau de partenaires</h3>
+                            <p>Profitez de réductions exclusives chez nos partenaires au Togo</p>
+                        </div>
+                    </li>
                 </ul>
             </div>
         </div>
 
-        <!-- Section des onglets avec 3 options -->
+        <!-- Section des onglets avec 5 options -->
         <div class="tabs-container">
             <div class="tabs-header">
                 <div class="tab portefeuille-tab active" data-tab="portefeuille-tab-content">
@@ -726,6 +888,14 @@
                 <div class="tab mastercard-tab" data-tab="mastercard-tab-content">
                     <i class="fab fa-cc-mastercard"></i>
                     <span>Mastercard</span>
+                </div>
+                <div class="tab commande-tab" data-tab="commande-tab-content">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Commandez</span>
+                </div>
+                <div class="tab partenaires-tab" data-tab="partenaires-tab-content">
+                    <i class="fas fa-handshake"></i>
+                    <span>Nos Partenaires</span>
                 </div>
             </div>
             
@@ -778,6 +948,269 @@
                     </a>
                 </div>
             </div>
+            
+            <div id="commande-tab-content" class="tabs-content">
+                <div class="tab-content">
+                    <div class="app-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3>Commandez nos produits</h3>
+                    <p>Découvrez nos offres exclusives et commandez nos produits financiers pour mieux gérer votre argent.</p>
+                    <div class="card-badges">
+                        <span class="card-badge commande-badge">Livraison offerte</span>
+                        <span class="card-badge commande-badge">Paiement sécurisé</span>
+                        <span class="card-badge commande-badge">Satisfait ou remboursé</span>
+                    </div>
+                    <button class="btn" onclick="window.location.href='inscription.html'">
+                        <i class="fas fa-user-plus"></i>
+                        S'inscrire et commander
+                    </button>
+                </div>
+            </div>
+            
+            <div id="partenaires-tab-content" class="tabs-content">
+                <div class="tab-content">
+                    <div class="app-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <h3>Nos Partenaires</h3>
+                    <p>Découvrez les boutiques et magasins partenaires qui acceptent notre carte de paiement digitale.</p>
+                    <div class="card-badges">
+                        <span class="card-badge partenaires-badge">Réductions exclusives</span>
+                        <span class="card-badge partenaires-badge">Paiement sécurisé</span>
+                        <span class="card-badge partenaires-badge">+50 partenaires</span>
+                    </div>
+                    
+                    <div class="partenaires-grid">
+                        <!-- Supermarchés -->
+                        <div class="categorie-partenaires">
+                            <div class="categorie-titre">
+                                <i class="fas fa-shopping-basket"></i>
+                                <span>Supermarchés & Alimentation</span>
+                            </div>
+                            <ul class="boutique-liste">
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-store"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Super U Togo</div>
+                                        <div class="boutique-adresse">Lomé, Boulevard du 13 Janvier</div>
+                                    </div>
+                                    <div class="boutique-remise">-5%</div>
+                                </li>
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-store"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Ramco Supermarché</div>
+                                        <div class="boutique-adresse">Adidogomé, Lomé</div>
+                                    </div>
+                                    <div class="boutique-remise">-3%</div>
+                                </li>
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-store"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Score Supermarché</div>
+                                        <div class="boutique-adresse">Agoè-Nyivé, Lomé</div>
+                                    </div>
+                                    <div class="boutique-remise">-5%</div>
+                                </li>
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-store"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Alimentation Générale AK</div>
+                                        <div class="boutique-adresse">Kara, Quartier Assigamey</div>
+                                    </div>
+                                    <div class="boutique-remise">-2%</div>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Boutiques de vêtements -->
+                        <div class="categorie-partenaires">
+                            <div class="categorie-titre">
+                                <i class="fas fa-tshirt"></i>
+                                <span>Mode & Accessoires</span>
+                            </div>
+                            <ul class="boutique-liste">
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-tshirt"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Mode Plus Togo</div>
+                                        <div class="boutique-adresse">Bè, Lomé</div>
+                                    </div>
+                                    <div class="boutique-remise">-10%</div>
+                                </li>
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-tshirt"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Kente Style</div>
+                                        <div class="boutique-adresse">Grand Marché, Lomé</div>
+                                    </div>
+                                    <div class="boutique-remise">-5%</div>
+                                </li>
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-shoe-prints"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Chaussure City</div>
+                                        <div class="boutique-adresse">Tokoin, Lomé</div>
+                                    </div>
+                                    <div class="boutique-remise">-8%</div>
+                                </li>
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-gem"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Boutique 5 Étoiles</div>
+                                        <div class="boutique-adresse">Kégué, Lomé</div>
+                                    </div>
+                                    <div class="boutique-remise">-7%</div>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Restaurants & Fast-food -->
+                        <div class="categorie-partenaires">
+                            <div class="categorie-titre">
+                                <i class="fas fa-utensils"></i>
+                                <span>Restaurants & Fast-food</span>
+                            </div>
+                            <ul class="boutique-liste">
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-utensils"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Restaurant Le Sahel</div>
+                                        <div class="boutique-adresse">Lomé, Quartier des Ambassades</div>
+                                    </div>
+                                    <div class="boutique-remise">-5%</div>
+                                </li>
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-hamburger"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Fast Food Tasty</div>
+                                        <div class="boutique-adresse">Adidogomé, Lomé</div>
+                                    </div>
+                                    <div class="boutique-remise">-3%</div>
+                                </li>
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-coffee"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Café Lounge</div>
+                                        <div class="boutique-adresse">Agoè, Lomé</div>
+                                    </div>
+                                    <div class="boutique-remise">-4%</div>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Électronique & Téléphonie -->
+                        <div class="categorie-partenaires">
+                            <div class="categorie-titre">
+                                <i class="fas fa-mobile-alt"></i>
+                                <span>Électronique & Téléphonie</span>
+                            </div>
+                            <ul class="boutique-liste">
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-laptop"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Togo Tech Store</div>
+                                        <div class="boutique-adresse">Tokoin, Lomé</div>
+                                    </div>
+                                    <div class="boutique-remise">-5%</div>
+                                </li>
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-mobile-alt"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Phone Center Togo</div>
+                                        <div class="boutique-adresse">Bè, Lomé</div>
+                                    </div>
+                                    <div class="boutique-remise">-3%</div>
+                                </li>
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-tv"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Electro Shop</div>
+                                        <div class="boutique-adresse">Kégué, Lomé</div>
+                                    </div>
+                                    <div class="boutique-remise">-4%</div>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Services & Santé -->
+                        <div class="categorie-partenaires">
+                            <div class="categorie-titre">
+                                <i class="fas fa-hospital-user"></i>
+                                <span>Services & Santé</span>
+                            </div>
+                            <ul class="boutique-liste">
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-hospital"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Pharmacie Centrale</div>
+                                        <div class="boutique-adresse">Lomé, Avenue Sarakawa</div>
+                                    </div>
+                                    <div class="boutique-remise">-2%</div>
+                                </li>
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-cut"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Salon Coiffure Élégance</div>
+                                        <div class="boutique-adresse">Agoè, Lomé</div>
+                                    </div>
+                                    <div class="boutique-remise">-5%</div>
+                                </li>
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-spa"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Institut de Beauté Bella</div>
+                                        <div class="boutique-adresse">Tokoin, Lomé</div>
+                                    </div>
+                                    <div class="boutique-remise">-8%</div>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Hôtels & Loisirs -->
+                        <div class="categorie-partenaires">
+                            <div class="categorie-titre">
+                                <i class="fas fa-hotel"></i>
+                                <span>Hôtels & Loisirs</span>
+                            </div>
+                            <ul class="boutique-liste">
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-hotel"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Hôtel 2 Février</div>
+                                        <div class="boutique-adresse">Lomé, Boulevard du 13 Janvier</div>
+                                    </div>
+                                    <div class="boutique-remise">-7%</div>
+                                </li>
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-swimmer"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Complexe Sportif Omnisport</div>
+                                        <div class="boutique-adresse">Kégué, Lomé</div>
+                                    </div>
+                                    <div class="boutique-remise">-10%</div>
+                                </li>
+                                <li class="boutique-item">
+                                    <div class="boutique-icon"><i class="fas fa-film"></i></div>
+                                    <div class="boutique-info">
+                                        <div class="boutique-nom">Cinéma Olympia</div>
+                                        <div class="boutique-adresse">Lomé, Quartier Administratif</div>
+                                    </div>
+                                    <div class="boutique-remise">-5%</div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px; text-align: center;">
+                        <button class="btn" onclick="window.location.href='inscription.html'">
+                            <i class="fas fa-user-plus"></i>
+                            S'inscrire et bénéficier des réductions
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="stats-section">
@@ -801,11 +1234,33 @@
                 <h3>Argent de Poche</h3>
                 <p>Enregistrez vos revenus supplémentaires et cadeaux</p>
             </div>
+            <div class="stat-card">
+                <i class="fas fa-store" style="color: var(--togo-rouge);"></i>
+                <h3>Partenaires</h3>
+                <p>+50 magasins partenaires à travers le Togo</p>
+            </div>
         </div>
 
         <div class="cta-section">
             <h2>Prêt à révolutionner votre gestion financière ?</h2>
             <p>Choisissez l'application qui correspond à vos besoins et commencez à gérer votre argent efficacement dès aujourd'hui.</p>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="window.location.href='portefeuille.html'">
+                    <i class="fas fa-wallet"></i> Portefeuille
+                </button>
+                <button class="btn btn-visa" onclick="window.location.href='cartevisa.html'">
+                    <i class="fab fa-cc-visa"></i> Carte Visa
+                </button>
+                <button class="btn btn-mastercard" onclick="window.location.href='mastercard.html'">
+                    <i class="fab fa-cc-mastercard"></i> Mastercard
+                </button>
+                <button class="btn btn-commande" onclick="window.location.href='inscription.html'">
+                    <i class="fas fa-shopping-cart"></i> Commander
+                </button>
+                <button class="btn btn-partenaires" onclick="switchToPartenairesTab()">
+                    <i class="fas fa-handshake"></i> Partenaires
+                </button>
+            </div>
         </div>
 
         <footer>
@@ -838,7 +1293,7 @@
                     // Désactiver tous les onglets
                     tabs.forEach(t => {
                         t.classList.remove('active');
-                        t.classList.remove('portefeuille-tab', 'visa-tab', 'mastercard-tab');
+                        t.classList.remove('portefeuille-tab', 'visa-tab', 'mastercard-tab', 'commande-tab', 'partenaires-tab');
                     });
                     
                     // Désactiver tout le contenu
@@ -846,7 +1301,9 @@
                     
                     // Activer l'onglet cliqué avec sa classe spécifique
                     const tabClass = this.classList.contains('portefeuille-tab') ? 'portefeuille-tab' :
-                                   this.classList.contains('visa-tab') ? 'visa-tab' : 'mastercard-tab';
+                                   this.classList.contains('visa-tab') ? 'visa-tab' :
+                                   this.classList.contains('mastercard-tab') ? 'mastercard-tab' :
+                                   this.classList.contains('commande-tab') ? 'commande-tab' : 'partenaires-tab';
                     this.classList.add('active', tabClass);
                     
                     // Activer le contenu correspondant
@@ -860,6 +1317,30 @@
                 document.querySelector('header').style.opacity = '1';
             }, 100);
         });
+        
+        // Fonction pour basculer vers l'onglet Partenaires
+        function switchToPartenairesTab() {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tabs-content');
+            
+            tabs.forEach(t => {
+                t.classList.remove('active');
+                t.classList.remove('portefeuille-tab', 'visa-tab', 'mastercard-tab', 'commande-tab', 'partenaires-tab');
+            });
+            
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Activer l'onglet partenaires
+            const partenairesTab = document.querySelector('.tab.partenaires-tab');
+            if (partenairesTab) {
+                partenairesTab.classList.add('active', 'partenaires-tab');
+            }
+            
+            document.getElementById('partenaires-tab-content').classList.add('active');
+            
+            // Faire défiler jusqu'à l'onglet
+            document.querySelector('.tabs-container').scrollIntoView({ behavior: 'smooth' });
+        }
     </script>
 </body>
 </html>
