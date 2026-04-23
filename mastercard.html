@@ -24,6 +24,7 @@
             --mastercard-red: #eb001b;
             --mastercard-orange: #ff5f00;
             --mastercard-black: #000000;
+            --whatsapp-green: #25D366;
         }
         
         * {
@@ -428,6 +429,11 @@
             color: white;
         }
         
+        .btn-whatsapp {
+            background-color: var(--whatsapp-green);
+            color: white;
+        }
+        
         .btn:hover {
             opacity: 0.9;
             transform: translateY(-2px);
@@ -574,6 +580,54 @@
         .fedapay-btn:hover {
             opacity: 0.9;
             transform: translateY(-2px);
+        }
+        
+        .whatsapp-confirmation-section {
+            background: linear-gradient(135deg, #25D36610, #128C7E10);
+            border: 2px solid #25D366;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .whatsapp-confirmation-section h4 {
+            color: #25D366;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .payment-summary {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+        
+        .payment-summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .payment-summary-item:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            color: #0066CC;
+        }
+        
+        .qr-code-container {
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        #payment-qrcode {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
         }
         
         footer {
@@ -919,6 +973,38 @@
                                 <i class="fas fa-lock"></i> Paiement sécurisé - Frais de 10% appliqués automatiquement
                             </p>
                         </div>
+                        
+                        <!-- Section confirmation WhatsApp -->
+                        <div id="whatsapp-confirmation-section" class="whatsapp-confirmation-section">
+                            <h4><i class="fab fa-whatsapp"></i> Confirmation de paiement par WhatsApp</h4>
+                            <p style="font-size: 0.85rem; margin-bottom: 15px;">Votre paiement a été détecté. Veuillez confirmer les informations ci-dessous :</p>
+                            
+                            <div id="payment-summary" class="payment-summary"></div>
+                            
+                            <div class="form-group">
+                                <label>Votre numéro WhatsApp</label>
+                                <input type="tel" id="whatsapp-phone" class="form-control" placeholder="+228 XXXXXXXX">
+                            </div>
+                            <div class="form-group">
+                                <label>Nom complet</label>
+                                <input type="text" id="whatsapp-name" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>Email (optionnel)</label>
+                                <input type="email" id="whatsapp-email" class="form-control" placeholder="votre@email.com">
+                            </div>
+                            
+                            <div class="qr-code-container" id="qr-code-container" style="display: none;">
+                                <p>Scannez ce QR code pour envoyer le message :</p>
+                                <div id="payment-qrcode"></div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button class="btn btn-whatsapp" id="send-whatsapp-confirmation" style="width: 100%;">
+                                    <i class="fab fa-whatsapp"></i> Envoyer la confirmation WhatsApp
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     
                     <div id="achat-tab" class="transaction-tab-content">
@@ -1129,6 +1215,9 @@
         const retraitFeesInfo = document.getElementById('retrait-fees-info');
         const autoSaveIndicator = document.getElementById('auto-save-indicator');
         const lastSaveTimeSpan = document.getElementById('last-save-time');
+        const whatsappConfirmationSection = document.getElementById('whatsapp-confirmation-section');
+        const paymentSummary = document.getElementById('payment-summary');
+        const sendWhatsappBtn = document.getElementById('send-whatsapp-confirmation');
         
         // ============================================
         // INITIALISATION
@@ -1141,6 +1230,7 @@
                 showApp();
                 checkAndApplyMaintenanceFee();
                 runDailyCleanup();
+                checkForPendingFedaPayPayment();
             }
         });
         
@@ -1235,6 +1325,8 @@
             
             const fedapayBtn = document.getElementById('fedapay-recharge-btn');
             if (fedapayBtn) fedapayBtn.addEventListener('click', handleFedaPayPayment);
+            
+            if (sendWhatsappBtn) sendWhatsappBtn.addEventListener('click', sendWhatsAppConfirmation);
             
             const achatBtn = document.getElementById('achat-btn');
             if (achatBtn) achatBtn.addEventListener('click', () => openModal('achat-modal'));
@@ -1498,6 +1590,9 @@
             }
         }
         
+        // ============================================
+        // PAIEMENT FEDAPAY AVEC CONFIRMATION WHATSAPP
+        // ============================================
         function handleFedaPayPayment() {
             const btn = document.getElementById('fedapay-recharge-btn');
             if (!btn) return;
@@ -1532,41 +1627,165 @@
             window.location.href = FEDAPAY_PAYMENT_URL;
         }
         
-        // Fonction pour vérifier les paiements en attente (sans envoi automatique WhatsApp)
-        function checkPendingPayment() {
+        function checkForPendingFedaPayPayment() {
             const pendingRecharge = sessionStorage.getItem('pendingRecharge');
-            if (pendingRecharge && isLoggedIn) {
+            if (pendingRecharge && currentUser) {
                 const montant = parseInt(pendingRecharge);
                 const frais = Math.round(montant * RECHARGE_FEE_PERCENTAGE);
                 const net = montant - frais;
                 
-                currentUser.balance += net;
-                currentUser.transactions.unshift({
-                    id: Date.now(),
-                    name: `Rechargement FedaPay de ${formatCurrency(montant)} (${formatCurrency(frais)} frais)`,
-                    amount: net,
-                    date: new Date(),
-                    type: "income"
-                });
-                
-                updateUI();
-                saveData();
-                showNotif(`✅ ${formatCurrency(net)} crédité sur votre compte !`, 'success');
-                
-                sessionStorage.removeItem('pendingRecharge');
-                sessionStorage.removeItem('userEmail');
-                sessionStorage.removeItem('userPhone');
-                sessionStorage.removeItem('userName');
-                sessionStorage.removeItem('paymentTimestamp');
+                pendingPaymentAmount = montant;
+                showWhatsAppConfirmationForm(montant, frais, net);
             }
         }
         
-        // Appel de la vérification des paiements en attente au chargement
-        setTimeout(function() {
-            if (isLoggedIn) {
-                checkPendingPayment();
+        function showWhatsAppConfirmationForm(montant, frais, net) {
+            if (!whatsappConfirmationSection) return;
+            whatsappConfirmationSection.style.display = 'block';
+            
+            if (paymentSummary) {
+                paymentSummary.innerHTML = `
+                    <div class="payment-summary-item">
+                        <span>💰 Montant saisi :</span>
+                        <strong>${formatCurrency(montant)}</strong>
+                    </div>
+                    <div class="payment-summary-item">
+                        <span>📊 Frais de recharge (10%) :</span>
+                        <strong>${formatCurrency(frais)}</strong>
+                    </div>
+                    <div class="payment-summary-item">
+                        <span>✨ Montant net crédité :</span>
+                        <strong style="color: #388e3c;">${formatCurrency(net)}</strong>
+                    </div>
+                    <div class="payment-summary-item">
+                        <span>💵 Ancien solde :</span>
+                        <strong>${formatCurrency(currentUser.balance)}</strong>
+                    </div>
+                    <div class="payment-summary-item">
+                        <span>💵 Nouveau solde après crédit :</span>
+                        <strong style="color: #0066CC;">${formatCurrency(currentUser.balance + net)}</strong>
+                    </div>
+                `;
             }
-        }, 500);
+            
+            const whatsappPhone = document.getElementById('whatsapp-phone');
+            const whatsappName = document.getElementById('whatsapp-name');
+            const whatsappEmail = document.getElementById('whatsapp-email');
+            
+            if (whatsappPhone) whatsappPhone.value = currentUser.phone;
+            if (whatsappName) whatsappName.value = currentUser.fullname;
+            if (whatsappEmail) whatsappEmail.value = currentUser.email;
+            
+            generatePaymentQRCode(montant, frais, net);
+            whatsappConfirmationSection.scrollIntoView({ behavior: 'smooth' });
+            showNotif('✅ Paiement FedaPay détecté ! Veuillez confirmer via WhatsApp', 'success');
+        }
+        
+        function generatePaymentQRCode(montant, frais, net) {
+            const phoneInput = document.getElementById('whatsapp-phone');
+            const nameInput = document.getElementById('whatsapp-name');
+            const emailInput = document.getElementById('whatsapp-email');
+            
+            const phone = (phoneInput ? phoneInput.value : currentUser.phone) || currentUser.phone;
+            const name = (nameInput ? nameInput.value : currentUser.fullname) || currentUser.fullname;
+            const email = (emailInput ? emailInput.value : currentUser.email) || currentUser.email;
+            
+            const message = `✅ CONFIRMATION DE PAIEMENT FEDAPAY - MASTERCARD%0A%0A` +
+                `👤 Client: ${name}%0A` +
+                `📞 Téléphone: ${phone}%0A` +
+                `📧 Email: ${email}%0A` +
+                `💰 Montant saisi: ${formatCurrency(montant)}%0A` +
+                `📊 Frais de recharge (10%): ${formatCurrency(frais)}%0A` +
+                `✨ Montant net crédité: ${formatCurrency(net)}%0A` +
+                `💵 Ancien solde: ${formatCurrency(currentUser.balance)}%0A` +
+                `💵 Nouveau solde après crédit: ${formatCurrency(currentUser.balance + net)}%0A` +
+                `🕐 Date: ${new Date().toLocaleString('fr-FR')}%0A%0A` +
+                `🎉 Merci pour votre paiement ! Votre compte sera crédité après confirmation.`;
+            
+            const whatsappUrl = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${message}`;
+            
+            const qrcodeContainer = document.getElementById('payment-qrcode');
+            if (qrcodeContainer) {
+                qrcodeContainer.innerHTML = '';
+                
+                if (typeof QRCode !== 'undefined') {
+                    new QRCode(qrcodeContainer, {
+                        text: whatsappUrl,
+                        width: 180,
+                        height: 180,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                    const qrContainer = document.getElementById('qr-code-container');
+                    if (qrContainer) qrContainer.style.display = 'block';
+                }
+            }
+        }
+        
+        function sendWhatsAppConfirmation() {
+            const montant = pendingPaymentAmount;
+            if (!montant) {
+                alert("Aucun paiement en attente");
+                return;
+            }
+            
+            const frais = Math.round(montant * RECHARGE_FEE_PERCENTAGE);
+            const net = montant - frais;
+            const phoneInput = document.getElementById('whatsapp-phone');
+            const nameInput = document.getElementById('whatsapp-name');
+            const emailInput = document.getElementById('whatsapp-email');
+            
+            const phone = phoneInput ? phoneInput.value : currentUser.phone;
+            const name = nameInput ? nameInput.value : currentUser.fullname;
+            const email = emailInput ? emailInput.value : currentUser.email;
+            
+            if (!phone) {
+                alert("Veuillez entrer votre numéro WhatsApp");
+                return;
+            }
+            
+            currentUser.balance += net;
+            currentUser.transactions.unshift({
+                id: Date.now(),
+                name: `Rechargement FedaPay de ${formatCurrency(montant)} (${formatCurrency(frais)} frais)`,
+                amount: net,
+                date: new Date(),
+                type: "income"
+            });
+            
+            updateUI();
+            saveData();
+            
+            const message = `✅ CONFIRMATION DE PAIEMENT FEDAPAY - VALIDÉ%0A%0A` +
+                `👤 Client: ${name}%0A` +
+                `📞 Téléphone: ${phone}%0A` +
+                `📧 Email: ${email}%0A` +
+                `💰 Montant saisi: ${formatCurrency(montant)}%0A` +
+                `📊 Frais de recharge (10%): ${formatCurrency(frais)}%0A` +
+                `✨ Montant net crédité: ${formatCurrency(net)}%0A` +
+                `💵 Ancien solde: ${formatCurrency(currentUser.balance - net)}%0A` +
+                `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
+                `🕐 Date: ${new Date().toLocaleString('fr-FR')}%0A%0A` +
+                `✅ TRANSACTION VALIDÉE ET COMPTE CRÉDITÉ !%0A` +
+                `🎉 Merci pour votre confiance !`;
+            
+            const whatsappUrl = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${message}`;
+            window.open(whatsappUrl, '_blank');
+            
+            if (whatsappConfirmationSection) whatsappConfirmationSection.style.display = 'none';
+            pendingPaymentAmount = null;
+            currentUser.pendingRecharge = null;
+            saveData();
+            
+            sessionStorage.removeItem('pendingRecharge');
+            sessionStorage.removeItem('userEmail');
+            sessionStorage.removeItem('userPhone');
+            sessionStorage.removeItem('userName');
+            sessionStorage.removeItem('paymentTimestamp');
+            
+            showNotif(`✅ ${formatCurrency(net)} crédité sur votre compte !`, 'success');
+        }
         
         function handleAchat(e) {
             e.preventDefault();
