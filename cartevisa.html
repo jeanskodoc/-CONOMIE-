@@ -1153,7 +1153,7 @@
     <footer>
         <div class="container">
             <p>Portefeuille Visa Togo &copy; 2025 - Paiements sécurisés par FedaPay</p>
-            <p style="font-size: 0.75rem; margin-top: 5px;">Frais d'entretien mensuel: 5 FCFA (prélevés une fois par mois si solde > 10 FCFA)</p>
+            <p style="font-size: 0.75rem; margin-top: 5px;">Frais d'entretien mensuel: 5 FCFA (prélevés une seule fois par mois si solde > 10 FCFA)</p>
             <p style="font-size: 0.7rem; margin-top: 3px;">📊 Historique des transactions conservé 29 jours</p>
         </div>
     </footer>
@@ -1280,9 +1280,9 @@
         
         // Constantes
         const FEDAPAY_PAYMENT_URL = "https://me.fedapay.com/lmuOo1Nv";
-        const MAINTENANCE_FEE = 5; // Frais réduits à 5 FCFA
-        const MIN_BALANCE_FOR_FEE = 10; // Minimum 10 FCFA pour prélever (au lieu de 200)
-        const TRANSACTION_RETENTION_DAYS = 29; // 29 jours de conservation
+        const MAINTENANCE_FEE = 5;
+        const MIN_BALANCE_FOR_FEE = 10;
+        const TRANSACTION_RETENTION_DAYS = 29;
         
         let currentUser = null;
         let isLoggedIn = false;
@@ -1326,7 +1326,6 @@
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             
-            // Vérifier si un nettoyage a déjà été fait aujourd'hui
             if (currentUser.lastCleanupDate) {
                 const lastCleanup = new Date(currentUser.lastCleanupDate);
                 if (lastCleanup.toDateString() === today.toDateString()) {
@@ -1337,9 +1336,6 @@
             const cutoffDate = new Date();
             cutoffDate.setDate(cutoffDate.getDate() - TRANSACTION_RETENTION_DAYS);
             
-            const oldTransactionsCount = currentUser.transactions.filter(t => new Date(t.date) < cutoffDate).length;
-            
-            // Filtrer les transactions de moins de 29 jours
             const newTransactions = currentUser.transactions.filter(t => new Date(t.date) >= cutoffDate);
             
             if (newTransactions.length !== currentUser.transactions.length) {
@@ -1416,7 +1412,7 @@
             
             document.getElementById('retrait-montant').addEventListener('input', updateRetraitFees);
             
-            // Vérifier les frais toutes les heures
+            // Vérifier les frais toutes les heures (mais ne prélève qu'une fois par mois)
             setInterval(() => {
                 if (isLoggedIn && currentUser) {
                     checkAndApplyMaintenanceFee();
@@ -1425,7 +1421,7 @@
             }, 3600000);
         }
         
-        // Vérification des frais d'entretien mensuels (une seule fois par mois)
+        // Vérification des frais d'entretien mensuels (UNE SEULE FOIS PAR MOIS)
         function checkAndApplyMaintenanceFee() {
             if (!currentUser) return false;
             
@@ -1434,9 +1430,10 @@
             const currentYear = now.getFullYear();
             
             let feeAlreadyApplied = false;
+            
+            // Vérifier si les frais ont déjà été appliqués ce mois-ci
             if (currentUser.lastMaintenanceFeeDate) {
                 const lastFeeDate = new Date(currentUser.lastMaintenanceFeeDate);
-                // Vérifier si le dernier prélèvement date du même mois
                 if (lastFeeDate.getMonth() === currentMonth && lastFeeDate.getFullYear() === currentYear) {
                     feeAlreadyApplied = true;
                 }
@@ -1444,12 +1441,15 @@
             
             updateFeeStatusDisplay(feeAlreadyApplied);
             
-            // Appliquer les frais seulement si non déjà appliqués ce mois-ci ET solde suffisant
+            // Appliquer les frais UNIQUEMENT si non déjà appliqués ce mois-ci ET solde suffisant
             if (!feeAlreadyApplied && currentUser.balance > MIN_BALANCE_FOR_FEE) {
                 applyMaintenanceFee();
                 return true;
             } else if (!feeAlreadyApplied && currentUser.balance <= MIN_BALANCE_FOR_FEE) {
                 showNotif(`⚠️ Frais d'entretien mensuel (${formatCurrency(MAINTENANCE_FEE)}) non appliqués : solde insuffisant (minimum ${formatCurrency(MIN_BALANCE_FOR_FEE)})`, 'warning');
+            } else if (feeAlreadyApplied) {
+                // Afficher un message silencieux ou rien du tout
+                console.log("Frais déjà appliqués ce mois-ci");
             }
             
             return false;
@@ -1614,7 +1614,6 @@
             if (!transactionList) return;
             transactionList.innerHTML = '';
             
-            // Afficher uniquement les transactions des 30 derniers jours
             const cutoffDate = new Date();
             cutoffDate.setDate(cutoffDate.getDate() - TRANSACTION_RETENTION_DAYS);
             
@@ -1664,7 +1663,6 @@
         }
         
         function updateStatistics() {
-            const now = new Date();
             const cutoffDate = new Date();
             cutoffDate.setDate(cutoffDate.getDate() - TRANSACTION_RETENTION_DAYS);
             
