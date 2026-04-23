@@ -765,10 +765,23 @@
             justify-content: center;
             margin: 10px 0;
         }
+        
+        .auto-save-indicator {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
     <div class="save-notification" id="save-notification"></div>
+    <div class="auto-save-indicator" id="auto-save-indicator">💾 Sauvegarde automatique active</div>
     
     <div class="login-container" id="login-container">
         <div class="login-box">
@@ -1187,7 +1200,6 @@
                     const hash = simpleHash(password);
                     for (let [id, user] of _users) {
                         if (user.username === username && user.passwordHash === hash) {
-                            // Retourner une copie sans données sensibles
                             const { passwordHash, ...safeUser } = user;
                             return safeUser;
                         }
@@ -1239,6 +1251,7 @@
         let currentUser = null;
         let isLoggedIn = false;
         let pendingPaymentAmount = null;
+        let autoSaveInterval = null;
         
         // Éléments DOM
         const loginContainer = document.getElementById('login-container');
@@ -1258,13 +1271,39 @@
         const userFullnameSpan = document.getElementById('user-fullname');
         const userAvatar = document.getElementById('user-avatar');
         const cardHolder = document.getElementById('card-holder');
+        const autoSaveIndicator = document.getElementById('auto-save-indicator');
         
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
             loadData();
             setupEventListeners();
             checkForPendingPayment();
+            startAutoSave();
         });
+        
+        function startAutoSave() {
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+            }
+            autoSaveInterval = setInterval(function() {
+                if (isLoggedIn && currentUser) {
+                    saveToDatabase();
+                    if (autoSaveIndicator) {
+                        autoSaveIndicator.style.backgroundColor = '#4caf50';
+                        setTimeout(() => {
+                            if (autoSaveIndicator) autoSaveIndicator.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                        }, 500);
+                    }
+                }
+            }, 5000);
+        }
+        
+        function stopAutoSave() {
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+                autoSaveInterval = null;
+            }
+        }
         
         function setupEventListeners() {
             loginForm.addEventListener('submit', handleLogin);
@@ -1301,7 +1340,6 @@
             
             document.getElementById('retrait-montant').addEventListener('input', updateRetraitFees);
             
-            // Vérifier les frais toutes les heures
             setInterval(() => {
                 if (isLoggedIn && currentUser) {
                     checkAndApplyMaintenanceFee();
@@ -1309,7 +1347,6 @@
             }, 3600000);
         }
         
-        // Gestion des frais d'entretien mensuels
         function checkAndApplyMaintenanceFee() {
             if (!currentUser) return false;
             
@@ -1457,12 +1494,14 @@
         
         function handleLogout() {
             isLoggedIn = false;
+            stopAutoSave();
             currentUser = null;
             saveToDatabase();
             loginContainer.style.display = 'flex';
             appContainer.style.display = 'none';
             document.getElementById('login-form').reset();
             showNotif('Déconnexion réussie', 'info');
+            startAutoSave();
         }
         
         function updateUI() {
@@ -1968,7 +2007,6 @@
                     pendingRecharge: currentUser.pendingRecharge
                 };
                 USERS_DATABASE.saveToLocalStorage(currentUser.id, dynamicData);
-                // Sauvegarde supplémentaire du solde seul pour faciliter l'accès
                 localStorage.setItem(`balance_${currentUser.id}`, currentUser.balance);
                 localStorage.setItem(`lastUpdate_${currentUser.id}`, new Date().toISOString());
             }
@@ -1985,11 +2023,8 @@
                 if (user) {
                     currentUser = user;
                     isLoggedIn = true;
-                    // Vérifier si le solde local est différent et alerter
-                    const savedBalance = localStorage.getItem(`balance_${savedUserId}`);
-                    if (savedBalance && parseInt(savedBalance) !== user.balance) {
-                        console.log("Solde local différent du solde en mémoire");
-                    }
+                    showApp();
+                    checkAndApplyMaintenanceFee();
                 }
             }
         }
