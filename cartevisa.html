@@ -869,7 +869,7 @@
                     <div class="balance-label">Solde actuel</div>
                     <div class="balance-amount" id="balance-amount">0 FCFA</div>
                     <div class="maintenance-fee-info" id="maintenance-fee-info">
-                        <span><i class="fas fa-calendar-alt"></i> Frais d'entretien mensuel: 100 FCFA</span>
+                        <span><i class="fas fa-calendar-alt"></i> Frais d'entretien mensuel: 5 FCFA</span>
                         <span class="fee-badge" id="fee-status-badge">Vérification...</span>
                     </div>
                 </div>
@@ -1153,7 +1153,7 @@
     <footer>
         <div class="container">
             <p>Portefeuille Visa Togo &copy; 2025 - Paiements sécurisés par FedaPay</p>
-            <p style="font-size: 0.75rem; margin-top: 5px;">Frais d'entretien mensuel: 100 FCFA (prélevés une fois par mois si solde > 200 FCFA)</p>
+            <p style="font-size: 0.75rem; margin-top: 5px;">Frais d'entretien mensuel: 5 FCFA (prélevés une fois par mois si solde > 10 FCFA)</p>
             <p style="font-size: 0.7rem; margin-top: 3px;">📊 Historique des transactions conservé 29 jours</p>
         </div>
     </footer>
@@ -1280,8 +1280,8 @@
         
         // Constantes
         const FEDAPAY_PAYMENT_URL = "https://me.fedapay.com/lmuOo1Nv";
-        const MAINTENANCE_FEE = 100;
-        const MIN_BALANCE_FOR_FEE = 200;
+        const MAINTENANCE_FEE = 5; // Frais réduits à 5 FCFA
+        const MIN_BALANCE_FOR_FEE = 10; // Minimum 10 FCFA pour prélever (au lieu de 200)
         const TRANSACTION_RETENTION_DAYS = 29; // 29 jours de conservation
         
         let currentUser = null;
