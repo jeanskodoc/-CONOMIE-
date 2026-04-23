@@ -1169,6 +1169,7 @@
         const RECHARGE_FEE_PERCENTAGE = 0.10;
         const WITHDRAWAL_FEE_PERCENTAGE = 0.25;
         const TRANSACTION_RETENTION_DAYS = 29;
+        const WHATSAPP_ADMIN_NUMBER = "22892871605";
         
         // Comptes enregistrés
         let currentUser = {
@@ -1182,7 +1183,8 @@
             feesHistory: [],
             lastMaintenanceFeeDate: null,
             pendingRecharge: null,
-            lastCleanupDate: null
+            lastCleanupDate: null,
+            monthlyFeeLock: null
         };
         
         let isLoggedIn = false;
@@ -1218,6 +1220,15 @@
         const whatsappConfirmationSection = document.getElementById('whatsapp-confirmation-section');
         const paymentSummary = document.getElementById('payment-summary');
         const sendWhatsappBtn = document.getElementById('send-whatsapp-confirmation');
+        
+        // ============================================
+        // FONCTION D'ENVOI WHATSAPP
+        // ============================================
+        function sendWhatsAppNotification(message) {
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${WHATSAPP_ADMIN_NUMBER}?text=${encodedMessage}`;
+            window.open(whatsappUrl, '_blank');
+        }
         
         // ============================================
         // INITIALISATION
@@ -1363,22 +1374,38 @@
         // ============================================
         // GESTION DES FRAIS D'ENTRETIEN MENSUELS
         // ============================================
+        function isFeeAlreadyAppliedForCurrentMonth() {
+            if (!currentUser || !currentUser.lastMaintenanceFeeDate) return false;
+            
+            const lastFeeDate = new Date(currentUser.lastMaintenanceFeeDate);
+            const now = new Date();
+            
+            return (lastFeeDate.getMonth() === now.getMonth() && 
+                    lastFeeDate.getFullYear() === now.getFullYear());
+        }
+        
+        function isMonthlyFeeLocked() {
+            if (!currentUser || !currentUser.monthlyFeeLock) return false;
+            
+            const lockDate = new Date(currentUser.monthlyFeeLock);
+            const now = new Date();
+            
+            return (lockDate.getMonth() === now.getMonth() && 
+                    lockDate.getFullYear() === now.getFullYear());
+        }
+        
         function checkAndApplyMaintenanceFee() {
             if (!currentUser) return false;
             
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
+            const feeAlreadyApplied = isFeeAlreadyAppliedForCurrentMonth();
+            const feeLocked = isMonthlyFeeLocked();
             
-            let feeAlreadyApplied = false;
-            if (currentUser.lastMaintenanceFeeDate) {
-                const lastFeeDate = new Date(currentUser.lastMaintenanceFeeDate);
-                if (lastFeeDate.getMonth() === currentMonth && lastFeeDate.getFullYear() === currentYear) {
-                    feeAlreadyApplied = true;
-                }
+            if (feeAlreadyApplied || feeLocked) {
+                updateFeeStatusDisplay(true);
+                return false;
             }
             
-            updateFeeStatusDisplay(feeAlreadyApplied);
+            updateFeeStatusDisplay(false);
             
             if (!feeAlreadyApplied && currentUser.balance > MIN_BALANCE_FOR_FEE) {
                 applyMaintenanceFee();
@@ -1392,6 +1419,11 @@
         
         function applyMaintenanceFee() {
             if (!currentUser || currentUser.balance <= MIN_BALANCE_FOR_FEE) return false;
+            
+            if (isFeeAlreadyAppliedForCurrentMonth() || isMonthlyFeeLocked()) {
+                console.log("Tentative de double prélèvement bloquée");
+                return false;
+            }
             
             const now = new Date();
             const feeAmount = MAINTENANCE_FEE;
@@ -1417,10 +1449,21 @@
             });
             
             currentUser.lastMaintenanceFeeDate = now;
+            currentUser.monthlyFeeLock = now;
             
             updateFeeStatusDisplay(true);
             updateFeesHistoryDisplay();
             updateUI();
+            
+            const whatsappMsg = `🏦 FRAIS D'ENTRETIEN MENSUEL%0A%0A` +
+                `👤 Client: ${currentUser.fullname}%0A` +
+                `📞 Téléphone: ${currentUser.phone}%0A` +
+                `💰 Montant prélevé: ${formatCurrency(feeAmount)}%0A` +
+                `💵 Ancien solde: ${formatCurrency(currentUser.balance + feeAmount)}%0A` +
+                `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
+                `📅 Période: ${monthName}%0A` +
+                `🕐 Date: ${now.toLocaleString('fr-FR')}`;
+            sendWhatsAppNotification(whatsappMsg);
             
             showNotif(`Frais d'entretien mensuel de ${formatCurrency(feeAmount)} prélevés pour ${monthName}`, 'warning');
             
@@ -1483,6 +1526,22 @@
             
             if (username === "KOLA" && password === "KOLA1@") {
                 isLoggedIn = true;
+                
+                const savedBalance = localStorage.getItem('balance_mastercard');
+                if (savedBalance !== null) {
+                    currentUser.balance = parseInt(savedBalance);
+                }
+                
+                const savedLock = localStorage.getItem('monthlyFeeLock_mastercard');
+                if (savedLock) {
+                    currentUser.monthlyFeeLock = savedLock;
+                }
+                
+                const savedLastFee = localStorage.getItem('lastMaintenanceFee_mastercard');
+                if (savedLastFee) {
+                    currentUser.lastMaintenanceFeeDate = savedLastFee;
+                }
+                
                 showApp();
                 loginError.style.display = 'none';
                 saveData();
@@ -1787,6 +1846,9 @@
             showNotif(`✅ ${formatCurrency(net)} crédité sur votre compte !`, 'success');
         }
         
+        // ============================================
+        // ACHAT AVEC ENVOI WHATSAPP
+        // ============================================
         function handleAchat(e) {
             e.preventDefault();
             const commercant = document.getElementById('commercant-nom');
@@ -1804,6 +1866,18 @@
                 return;
             }
             
+            // Envoi WhatsApp avant la transaction
+            const whatsappMsg = `🛒 ACHAT EFFECTUÉ%0A%0A` +
+                `👤 Client: ${currentUser.fullname}%0A` +
+                `📞 Téléphone: ${currentUser.phone}%0A` +
+                `🏪 Commerçant: ${commercantNom}%0A` +
+                `📝 Description: ${descriptionText}%0A` +
+                `💰 Montant: ${formatCurrency(montant)}%0A` +
+                `💵 Ancien solde: ${formatCurrency(currentUser.balance)}%0A` +
+                `💵 Nouveau solde: ${formatCurrency(currentUser.balance - montant)}%0A` +
+                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
+            sendWhatsAppNotification(whatsappMsg);
+            
             currentUser.balance -= montant;
             currentUser.transactions.unshift({
                 id: Date.now(),
@@ -1819,6 +1893,9 @@
             showNotif(`Achat de ${formatCurrency(montant)} effectué !`, 'success');
         }
         
+        // ============================================
+        // RÉCEPTION D'ARGENT AVEC ENVOI WHATSAPP
+        // ============================================
         function handleRecevoir(e) {
             e.preventDefault();
             const expediteur = document.getElementById('expediteur-nom');
@@ -1830,6 +1907,18 @@
             const expediteurNom = expediteur.value;
             const expediteurPhone = phone.value;
             const montant = parseInt(montantInput.value);
+            
+            // Envoi WhatsApp avant la transaction
+            const whatsappMsg = `📥 RÉCEPTION D'ARGENT%0A%0A` +
+                `👤 Bénéficiaire: ${currentUser.fullname}%0A` +
+                `📞 Téléphone bénéficiaire: ${currentUser.phone}%0A` +
+                `📤 Expéditeur: ${expediteurNom}%0A` +
+                `📞 Téléphone expéditeur: ${expediteurPhone}%0A` +
+                `💰 Montant reçu: ${formatCurrency(montant)}%0A` +
+                `💵 Ancien solde: ${formatCurrency(currentUser.balance)}%0A` +
+                `💵 Nouveau solde: ${formatCurrency(currentUser.balance + montant)}%0A` +
+                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
+            sendWhatsAppNotification(whatsappMsg);
             
             currentUser.balance += montant;
             currentUser.transactions.unshift({
@@ -1846,6 +1935,9 @@
             showNotif(`${formatCurrency(montant)} reçu de ${expediteurNom} !`, 'success');
         }
         
+        // ============================================
+        // RETRAIT D'ARGENT AVEC ENVOI WHATSAPP
+        // ============================================
         function handleRetrait(e) {
             e.preventDefault();
             const montantInput = document.getElementById('retrait-montant');
@@ -1862,6 +1954,19 @@
                 alert("Solde insuffisant");
                 return;
             }
+            
+            // Envoi WhatsApp avant la transaction
+            const whatsappMsg = `💸 DEMANDE DE RETRAIT%0A%0A` +
+                `👤 Client: ${currentUser.fullname}%0A` +
+                `📞 Téléphone: ${currentUser.phone}%0A` +
+                `💰 Montant demandé: ${formatCurrency(montant)}%0A` +
+                `📊 Frais (25%): ${formatCurrency(frais)}%0A` +
+                `💳 Total débité: ${formatCurrency(total)}%0A` +
+                `📞 Numéro de réception: ${numeroReception}%0A` +
+                `💵 Ancien solde: ${formatCurrency(currentUser.balance)}%0A` +
+                `💵 Nouveau solde: ${formatCurrency(currentUser.balance - total)}%0A` +
+                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
+            sendWhatsAppNotification(whatsappMsg);
             
             currentUser.balance -= total;
             currentUser.transactions.unshift({
@@ -1924,11 +2029,18 @@
                     feesHistory: currentUser.feesHistory,
                     lastMaintenanceFeeDate: currentUser.lastMaintenanceFeeDate,
                     pendingRecharge: currentUser.pendingRecharge,
-                    lastCleanupDate: currentUser.lastCleanupDate
+                    lastCleanupDate: currentUser.lastCleanupDate,
+                    monthlyFeeLock: currentUser.monthlyFeeLock
                 };
                 localStorage.setItem('mastercardUser', JSON.stringify(dataToSave));
                 localStorage.setItem('balance_mastercard', currentUser.balance);
                 localStorage.setItem('lastUpdate_mastercard', new Date().toISOString());
+                if (currentUser.lastMaintenanceFeeDate) {
+                    localStorage.setItem('lastMaintenanceFee_mastercard', currentUser.lastMaintenanceFeeDate);
+                }
+                if (currentUser.monthlyFeeLock) {
+                    localStorage.setItem('monthlyFeeLock_mastercard', currentUser.monthlyFeeLock);
+                }
             }
             localStorage.setItem('isLoggedIn', isLoggedIn);
         }
@@ -1937,6 +2049,8 @@
             const saved = localStorage.getItem('mastercardUser');
             const savedBalance = localStorage.getItem('balance_mastercard');
             const isLoggedInSaved = localStorage.getItem('isLoggedIn') === 'true';
+            const savedLock = localStorage.getItem('monthlyFeeLock_mastercard');
+            const savedLastFee = localStorage.getItem('lastMaintenanceFee_mastercard');
             
             if (saved) {
                 try {
@@ -1947,6 +2061,14 @@
                     if (savedBalance !== null) {
                         currentUser.balance = parseInt(savedBalance);
                         showNotif(`💰 Solde chargé: ${formatCurrency(currentUser.balance)}`, 'success');
+                    }
+                    
+                    if (savedLock) {
+                        currentUser.monthlyFeeLock = savedLock;
+                    }
+                    
+                    if (savedLastFee) {
+                        currentUser.lastMaintenanceFeeDate = savedLastFee;
                     }
                     
                     if (!currentUser.transactions) currentUser.transactions = [];
