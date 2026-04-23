@@ -374,7 +374,6 @@
         .btn-info { background-color: #2196f3; color: white; }
         .btn-family { background: var(--gradient-family); color: white; }
         .btn-feda { background: linear-gradient(135deg, #0066CC, #004499); color: white; }
-        .btn-whatsapp { background: #25D366; color: white; }
         
         .btn:hover {
             opacity: 0.9;
@@ -666,23 +665,6 @@
             gap: 10px;
         }
         
-        .whatsapp-payment-form {
-            background: linear-gradient(135deg, #25D36610, #128C7E10);
-            border: 2px solid #25D366;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 15px 0;
-            display: none;
-        }
-        
-        .whatsapp-payment-form h4 {
-            color: #25D366;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
         .loading-spinner {
             display: inline-block;
             width: 20px;
@@ -695,26 +677,6 @@
         
         @keyframes spin {
             to { transform: rotate(360deg); }
-        }
-        
-        .payment-summary {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 12px;
-            margin: 10px 0;
-        }
-        
-        .payment-summary-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .payment-summary-item:last-child {
-            border-bottom: none;
-            font-weight: bold;
-            color: #0066CC;
         }
         
         .fees-history {
@@ -753,17 +715,6 @@
             text-align: center;
             padding: 15px 0;
             color: #777;
-        }
-        
-        .qr-code-container {
-            text-align: center;
-            margin: 15px 0;
-        }
-        
-        #payment-qrcode {
-            display: flex;
-            justify-content: center;
-            margin: 10px 0;
         }
         
         .auto-save-indicator {
@@ -876,37 +827,6 @@
                             <p style="margin-top: 10px; font-size: 0.75rem; color: #666;">
                                 <i class="fas fa-lock"></i> Paiement sécurisé - Frais de 5% appliqués automatiquement
                             </p>
-                        </div>
-                        
-                        <div id="whatsapp-payment-section" class="whatsapp-payment-form">
-                            <h4><i class="fab fa-whatsapp"></i> Confirmation de paiement par WhatsApp</h4>
-                            <p style="font-size: 0.85rem; margin-bottom: 15px;">Votre paiement a été détecté. Veuillez confirmer les informations ci-dessous :</p>
-                            
-                            <div id="payment-summary" class="payment-summary"></div>
-                            
-                            <div class="form-group">
-                                <label>Votre numéro WhatsApp</label>
-                                <input type="tel" id="whatsapp-phone" class="form-control" placeholder="+228 XXXXXXXX">
-                            </div>
-                            <div class="form-group">
-                                <label>Nom complet</label>
-                                <input type="text" id="whatsapp-name" class="form-control">
-                            </div>
-                            <div class="form-group">
-                                <label>Email (optionnel)</label>
-                                <input type="email" id="whatsapp-email" class="form-control" placeholder="votre@email.com">
-                            </div>
-                            
-                            <div class="qr-code-container" id="qr-code-container" style="display: none;">
-                                <p>Scannez ce QR code pour envoyer le message :</p>
-                                <div id="payment-qrcode"></div>
-                            </div>
-                            
-                            <div class="form-actions">
-                                <button class="btn btn-whatsapp" id="send-whatsapp-confirmation" style="width: 100%;">
-                                    <i class="fab fa-whatsapp"></i> Envoyer la confirmation WhatsApp
-                                </button>
-                            </div>
                         </div>
                     </div>
                     
@@ -1250,7 +1170,6 @@
         
         let currentUser = null;
         let isLoggedIn = false;
-        let pendingPaymentAmount = null;
         let autoSaveInterval = null;
         
         // Éléments DOM
@@ -1263,8 +1182,6 @@
         const transactionList = document.getElementById('transaction-list');
         const familyMembersGrid = document.getElementById('family-members-grid');
         const saveNotification = document.getElementById('save-notification');
-        const whatsappPaymentSection = document.getElementById('whatsapp-payment-section');
-        const paymentSummary = document.getElementById('payment-summary');
         const feesHistoryList = document.getElementById('fees-history-list');
         const feeStatusBadge = document.getElementById('fee-status-badge');
         const maintenanceFeeInfo = document.getElementById('maintenance-fee-info');
@@ -1277,7 +1194,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadData();
             setupEventListeners();
-            checkForPendingPayment();
             startAutoSave();
         });
         
@@ -1320,7 +1236,6 @@
             });
             
             document.getElementById('fedapay-recharge-btn').addEventListener('click', handleFedaPayPayment);
-            document.getElementById('send-whatsapp-confirmation').addEventListener('click', sendWhatsAppConfirmation);
             
             document.getElementById('achat-btn').addEventListener('click', () => openModal('achat-modal'));
             document.getElementById('recevoir-btn').addEventListener('click', () => openModal('recevoir-modal'));
@@ -1406,15 +1321,6 @@
             updateFeesHistoryDisplay();
             updateUI();
             
-            const msg = `🏦 FRAIS D'ENTRETIEN MENSUEL%0A%0A` +
-                `👤 Client: ${currentUser.fullname}%0A` +
-                `💰 Montant prélevé: ${formatCurrency(feeAmount)}%0A` +
-                `💵 Ancien solde: ${formatCurrency(currentUser.balance + feeAmount)}%0A` +
-                `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
-                `📅 Période: ${monthName}%0A` +
-                `🕐 Date: ${now.toLocaleString('fr-FR')}`;
-            
-            window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
             showNotif(`Frais d'entretien mensuel de ${formatCurrency(feeAmount)} prélevés`, 'warning');
             
             saveToDatabase();
@@ -1624,143 +1530,13 @@
                 return;
             }
             
-            pendingPaymentAmount = montantInt;
-            currentUser.pendingRecharge = montantInt;
-            saveToDatabase();
-            
-            sessionStorage.setItem('pendingRecharge', montantInt);
-            sessionStorage.setItem('userEmail', currentUser.email);
-            sessionStorage.setItem('userPhone', currentUser.phone);
-            sessionStorage.setItem('userName', currentUser.fullname);
-            sessionStorage.setItem('paymentTimestamp', new Date().toISOString());
-            
-            window.location.href = FEDAPAY_PAYMENT_URL;
-        }
-        
-        function checkForPendingPayment() {
-            const pendingRecharge = sessionStorage.getItem('pendingRecharge');
-            if (pendingRecharge && currentUser) {
-                const montant = parseInt(pendingRecharge);
-                const frais = Math.round(montant * 0.05);
-                const net = montant - frais;
-                
-                pendingPaymentAmount = montant;
-                showWhatsAppPaymentForm(montant, frais, net);
-                
-                sessionStorage.removeItem('pendingRecharge');
-            }
-        }
-        
-        function showWhatsAppPaymentForm(montant, frais, net) {
-            if (!whatsappPaymentSection) return;
-            whatsappPaymentSection.style.display = 'block';
-            
-            if (paymentSummary) {
-                paymentSummary.innerHTML = `
-                    <div class="payment-summary-item">
-                        <span>💰 Montant saisi :</span>
-                        <strong>${formatCurrency(montant)}</strong>
-                    </div>
-                    <div class="payment-summary-item">
-                        <span>📊 Frais de recharge (5%) :</span>
-                        <strong>${formatCurrency(frais)}</strong>
-                    </div>
-                    <div class="payment-summary-item">
-                        <span>✨ Montant net crédité :</span>
-                        <strong style="color: #388e3c;">${formatCurrency(net)}</strong>
-                    </div>
-                    <div class="payment-summary-item">
-                        <span>💵 Ancien solde :</span>
-                        <strong>${formatCurrency(currentUser.balance)}</strong>
-                    </div>
-                    <div class="payment-summary-item">
-                        <span>💵 Nouveau solde après crédit :</span>
-                        <strong style="color: #0066CC;">${formatCurrency(currentUser.balance + net)}</strong>
-                    </div>
-                `;
-            }
-            
-            const whatsappPhone = document.getElementById('whatsapp-phone');
-            const whatsappName = document.getElementById('whatsapp-name');
-            const whatsappEmail = document.getElementById('whatsapp-email');
-            
-            if (whatsappPhone) whatsappPhone.value = currentUser.phone;
-            if (whatsappName) whatsappName.value = currentUser.fullname;
-            if (whatsappEmail) whatsappEmail.value = currentUser.email;
-            
-            generatePaymentQRCode(montant, frais, net);
-            whatsappPaymentSection.scrollIntoView({ behavior: 'smooth' });
-            showNotif('✅ Paiement détecté ! Veuillez confirmer via WhatsApp', 'success');
-        }
-        
-        function generatePaymentQRCode(montant, frais, net) {
-            const phoneInput = document.getElementById('whatsapp-phone');
-            const nameInput = document.getElementById('whatsapp-name');
-            const emailInput = document.getElementById('whatsapp-email');
-            
-            const phone = (phoneInput ? phoneInput.value : currentUser.phone) || currentUser.phone;
-            const name = (nameInput ? nameInput.value : currentUser.fullname) || currentUser.fullname;
-            const email = (emailInput ? emailInput.value : currentUser.email) || currentUser.email;
-            
-            const message = `✅ CONFIRMATION DE PAIEMENT FEDAPAY%0A%0A` +
-                `👤 Client: ${name}%0A` +
-                `📞 Téléphone: ${phone}%0A` +
-                `📧 Email: ${email}%0A` +
-                `💰 Montant saisi: ${formatCurrency(montant)}%0A` +
-                `📊 Frais de recharge (5%): ${formatCurrency(frais)}%0A` +
-                `✨ Montant net crédité: ${formatCurrency(net)}%0A` +
-                `💵 Ancien solde: ${formatCurrency(currentUser.balance)}%0A` +
-                `💵 Nouveau solde après crédit: ${formatCurrency(currentUser.balance + net)}%0A` +
-                `🕐 Date: ${new Date().toLocaleString('fr-FR')}%0A%0A` +
-                `🎉 Merci pour votre paiement ! Votre compte sera crédité après confirmation.`;
-            
-            const whatsappUrl = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${message}`;
-            
-            const qrcodeContainer = document.getElementById('payment-qrcode');
-            if (qrcodeContainer) {
-                qrcodeContainer.innerHTML = '';
-                
-                if (typeof QRCode !== 'undefined') {
-                    new QRCode(qrcodeContainer, {
-                        text: whatsappUrl,
-                        width: 180,
-                        height: 180,
-                        colorDark: "#000000",
-                        colorLight: "#ffffff",
-                        correctLevel: QRCode.CorrectLevel.H
-                    });
-                    const qrContainer = document.getElementById('qr-code-container');
-                    if (qrContainer) qrContainer.style.display = 'block';
-                }
-            }
-        }
-        
-        function sendWhatsAppConfirmation() {
-            const montant = pendingPaymentAmount;
-            if (!montant) {
-                alert("Aucun paiement en attente");
-                return;
-            }
-            
-            const frais = Math.round(montant * 0.05);
-            const net = montant - frais;
-            const phoneInput = document.getElementById('whatsapp-phone');
-            const nameInput = document.getElementById('whatsapp-name');
-            const emailInput = document.getElementById('whatsapp-email');
-            
-            const phone = phoneInput ? phoneInput.value : currentUser.phone;
-            const name = nameInput ? nameInput.value : currentUser.fullname;
-            const email = emailInput ? emailInput.value : currentUser.email;
-            
-            if (!phone) {
-                alert("Veuillez entrer votre numéro WhatsApp");
-                return;
-            }
+            const frais = Math.round(montantInt * 0.05);
+            const net = montantInt - frais;
             
             currentUser.balance += net;
             currentUser.transactions.unshift({
                 id: Date.now(),
-                name: `Rechargement FedaPay de ${formatCurrency(montant)} (${formatCurrency(frais)} frais)`,
+                name: `Rechargement FedaPay de ${formatCurrency(montantInt)} (${formatCurrency(frais)} frais)`,
                 amount: net,
                 date: new Date(),
                 type: "income"
@@ -1768,28 +1544,6 @@
             
             updateUI();
             saveToDatabase();
-            
-            const message = `✅ CONFIRMATION DE PAIEMENT FEDAPAY - VALIDÉ%0A%0A` +
-                `👤 Client: ${name}%0A` +
-                `📞 Téléphone: ${phone}%0A` +
-                `📧 Email: ${email}%0A` +
-                `💰 Montant saisi: ${formatCurrency(montant)}%0A` +
-                `📊 Frais de recharge (5%): ${formatCurrency(frais)}%0A` +
-                `✨ Montant net crédité: ${formatCurrency(net)}%0A` +
-                `💵 Ancien solde: ${formatCurrency(currentUser.balance - net)}%0A` +
-                `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
-                `🕐 Date: ${new Date().toLocaleString('fr-FR')}%0A%0A` +
-                `✅ TRANSACTION VALIDÉE ET COMPTE CRÉDITÉ !%0A` +
-                `🎉 Merci pour votre confiance !`;
-            
-            const whatsappUrl = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${message}`;
-            window.open(whatsappUrl, '_blank');
-            
-            if (whatsappPaymentSection) whatsappPaymentSection.style.display = 'none';
-            pendingPaymentAmount = null;
-            currentUser.pendingRecharge = null;
-            saveToDatabase();
-            
             showNotif(`✅ ${formatCurrency(net)} crédité sur votre compte !`, 'success');
         }
         
@@ -1813,16 +1567,6 @@
                 type: "expense"
             });
             
-            const msg = `🛒 ACHAT EFFECTUÉ%0A%0A` +
-                `👤 Client: ${currentUser.fullname}%0A` +
-                `🏪 Commerçant: ${commercant}%0A` +
-                `📝 Description: ${description}%0A` +
-                `💰 Montant: ${formatCurrency(montant)}%0A` +
-                `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
-                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
-            
-            window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
-            
             updateUI();
             saveToDatabase();
             closeAllModals();
@@ -1843,16 +1587,6 @@
                 date: new Date(),
                 type: "income"
             });
-            
-            const msg = `📥 RÉCEPTION D'ARGENT%0A%0A` +
-                `👤 Bénéficiaire: ${currentUser.fullname}%0A` +
-                `📤 Expéditeur: ${expediteur}%0A` +
-                `📞 Téléphone expéditeur: ${phone}%0A` +
-                `💰 Montant reçu: ${formatCurrency(montant)}%0A` +
-                `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
-                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
-            
-            window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
             
             updateUI();
             saveToDatabase();
@@ -1881,17 +1615,6 @@
                 type: "expense"
             });
             
-            const msg = `💸 DEMANDE DE RETRAIT%0A%0A` +
-                `👤 Client: ${currentUser.fullname}%0A` +
-                `💰 Montant demandé: ${formatCurrency(montant)}%0A` +
-                `📊 Frais de retrait (9%): ${formatCurrency(frais)}%0A` +
-                `💳 Total débité: ${formatCurrency(total)}%0A` +
-                `📞 Numéro de réception: ${numero}%0A` +
-                `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
-                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
-            
-            window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
-            
             updateUI();
             saveToDatabase();
             closeAllModals();
@@ -1918,17 +1641,6 @@
                 date: new Date(),
                 type: "expense"
             });
-            
-            const msg = `✈️ ENVOI D'ARGENT%0A%0A` +
-                `👤 Expéditeur: ${currentUser.fullname}%0A` +
-                `👥 Destinataire: ${name}%0A` +
-                `📞 Téléphone destinataire: ${phone}%0A` +
-                `💬 Motif: ${motif}%0A` +
-                `💰 Montant: ${formatCurrency(montant)}%0A` +
-                `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
-                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
-            
-            window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
             
             updateUI();
             saveToDatabase();
