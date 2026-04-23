@@ -801,6 +801,18 @@
             font-size: 8px;
             z-index: 1000;
         }
+        
+        .data-status {
+            position: fixed;
+            bottom: 10px;
+            left: 120px;
+            background: rgba(0,0,0,0.5);
+            color: #4caf50;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 8px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -808,6 +820,7 @@
     <div class="auto-save-indicator" id="auto-save-indicator">💾 Sauvegarde auto active</div>
     <div class="last-save-time" id="last-save-time">Dernière sauvegarde: --</div>
     <div class="cleanup-info" id="cleanup-info">🗑️ Transactions supprimées après 29 jours</div>
+    <div class="data-status" id="data-status">📊 Données chargées</div>
     
     <div class="login-container" id="login-container">
         <div class="login-box">
@@ -869,7 +882,7 @@
                     <div class="balance-label">Solde actuel</div>
                     <div class="balance-amount" id="balance-amount">0 FCFA</div>
                     <div class="maintenance-fee-info" id="maintenance-fee-info">
-                        <span><i class="fas fa-calendar-alt"></i> Frais d'entretien mensuel: 5 FCFA</span>
+                        <span><i class="fas fa-calendar-alt"></i> Frais d'entretien mensuel: 50 FCFA</span>
                         <span class="fee-badge" id="fee-status-badge">Vérification...</span>
                     </div>
                 </div>
@@ -940,12 +953,12 @@
                         <div class="stats">
                             <div class="stat-card">
                                 <div class="stat-icon">📈</div>
-                                <div>Revenus (30j)</div>
+                                <div>Revenus (29j)</div>
                                 <div class="stat-value stat-income" id="month-income">0 FCFA</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-icon">📉</div>
-                                <div>Dépenses (30j)</div>
+                                <div>Dépenses (29j)</div>
                                 <div class="stat-value stat-expense" id="month-expense">0 FCFA</div>
                             </div>
                         </div>
@@ -981,7 +994,7 @@
                     </div>
                     
                     <div class="transactions">
-                        <h3 style="margin-bottom: 10px;">📋 Historique des transactions (30 derniers jours)</h3>
+                        <h3 style="margin-bottom: 10px;">📋 Historique des transactions (29 derniers jours)</h3>
                         <ul class="transaction-list" id="transaction-list"></ul>
                     </div>
                     
@@ -1153,8 +1166,8 @@
     <footer>
         <div class="container">
             <p>Portefeuille Visa Togo &copy; 2025 - Paiements sécurisés par FedaPay</p>
-            <p style="font-size: 0.75rem; margin-top: 5px;">Frais d'entretien mensuel: 5 FCFA (prélevés une seule fois par mois si solde > 10 FCFA)</p>
-            <p style="font-size: 0.7rem; margin-top: 3px;">📊 Historique des transactions conservé 29 jours</p>
+            <p style="font-size: 0.75rem; margin-top: 5px;">Frais d'entretien mensuel: 50 FCFA (prélevés une seule fois par mois si solde > 60 FCFA)</p>
+            <p style="font-size: 0.7rem; margin-top: 3px;">📊 Historique des transactions conservé 29 jours - Sauvegarde automatique toutes les 5 secondes</p>
         </div>
     </footer>
 
@@ -1163,10 +1176,8 @@
         // BASE DE DONNÉES INTERNE (cachée)
         // ============================================
         const USERS_DATABASE = (function() {
-            // Stockage interne
             const _users = new Map();
             
-            // Simulation de hachage simple
             function simpleHash(str) {
                 let hash = 0;
                 for (let i = 0; i < str.length; i++) {
@@ -1176,7 +1187,6 @@
                 return hash.toString(16);
             }
             
-            // Ajout des utilisateurs
             _users.set(1, {
                 id: 1,
                 username: "KOLA1",
@@ -1186,8 +1196,10 @@
                 email: "kola1@example.com",
                 accountNumber: "TG-2024-KM01",
                 accountDate: "15 Mars 2024",
-                balance: 0,
-                transactions: [],
+                balance: 500,
+                transactions: [
+                    { id: 1, name: "Ouverture de compte", amount: 500, date: new Date(), type: "income" }
+                ],
                 familyMembers: [
                     { id: 1, name: "Marie KOLA", phone: "+228 90 12 34 56", relation: "Mère" },
                     { id: 2, name: "Jean KOLA", phone: "+228 91 23 45 67", relation: "Père" },
@@ -1196,7 +1208,8 @@
                 feesHistory: [],
                 lastMaintenanceFeeDate: null,
                 pendingRecharge: null,
-                lastCleanupDate: null
+                lastCleanupDate: null,
+                monthlyFeeLock: null
             });
             
             _users.set(2, {
@@ -1208,8 +1221,10 @@
                 email: "kola2@example.com",
                 accountNumber: "TG-2024-KM02",
                 accountDate: "20 Avril 2024",
-                balance: 0,
-                transactions: [],
+                balance: 500,
+                transactions: [
+                    { id: 1, name: "Ouverture de compte", amount: 500, date: new Date(), type: "income" }
+                ],
                 familyMembers: [
                     { id: 1, name: "KOLA Kodjo", phone: "+228 90 12 34 57", relation: "Frère" },
                     { id: 2, name: "KOLA Ami", phone: "+228 91 23 45 68", relation: "Sœur" }
@@ -1217,7 +1232,8 @@
                 feesHistory: [],
                 lastMaintenanceFeeDate: null,
                 pendingRecharge: null,
-                lastCleanupDate: null
+                lastCleanupDate: null,
+                monthlyFeeLock: null
             });
             
             return {
@@ -1259,17 +1275,10 @@
                             this.updateUser(id, data);
                             return this.getUserById(id);
                         } catch(e) {
-                            console.error("Erreur lors du chargement des données:", e);
+                            console.error("Erreur lors du chargement:", e);
                         }
                     }
                     return this.getUserById(id);
-                },
-                getSavedBalance: function(id) {
-                    const savedBalance = localStorage.getItem(`balance_${id}`);
-                    if (savedBalance) {
-                        return parseInt(savedBalance);
-                    }
-                    return null;
                 }
             };
         })();
@@ -1278,10 +1287,9 @@
         // APPLICATION
         // ============================================
         
-        // Constantes
         const FEDAPAY_PAYMENT_URL = "https://me.fedapay.com/lmuOo1Nv";
-        const MAINTENANCE_FEE = 5;
-        const MIN_BALANCE_FOR_FEE = 10;
+        const MAINTENANCE_FEE = 50; // Frais mensuels modifiés à 50 FCFA
+        const MIN_BALANCE_FOR_FEE = 60; // Minimum 60 FCFA pour prélever (légèrement au-dessus des frais)
         const TRANSACTION_RETENTION_DAYS = 29;
         
         let currentUser = null;
@@ -1309,17 +1317,144 @@
         const cardHolder = document.getElementById('card-holder');
         const autoSaveIndicator = document.getElementById('auto-save-indicator');
         const lastSaveTimeSpan = document.getElementById('last-save-time');
+        const dataStatusSpan = document.getElementById('data-status');
         
-        // Initialisation
-        document.addEventListener('DOMContentLoaded', function() {
-            loadData();
-            setupEventListeners();
-            checkForPendingPayment();
-            startAutoSave();
-            runDailyCleanup();
-        });
+        // ============================================
+        // CHARGEMENT DES DONNÉES (29 DERNIERS JOURS)
+        // ============================================
+        function filterLast29DaysTransactions(transactions) {
+            if (!transactions || transactions.length === 0) return [];
+            
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - TRANSACTION_RETENTION_DAYS);
+            
+            return transactions.filter(t => new Date(t.date) >= cutoffDate);
+        }
         
-        // Nettoyage des anciennes transactions (plus de 29 jours)
+        function loadUserData() {
+            const savedUserId = localStorage.getItem('currentUserId');
+            const isLoggedInSaved = localStorage.getItem('isLoggedIn') === 'true';
+            
+            if (savedUserId && isLoggedInSaved) {
+                const user = USERS_DATABASE.loadFromLocalStorage(parseInt(savedUserId));
+                if (user) {
+                    currentUser = user;
+                    isLoggedIn = true;
+                    
+                    // Charger le solde sauvegardé
+                    const savedBalance = localStorage.getItem(`balance_${savedUserId}`);
+                    if (savedBalance !== null) {
+                        currentUser.balance = parseInt(savedBalance);
+                    }
+                    
+                    // Charger le verrou mensuel
+                    const savedLock = localStorage.getItem(`monthlyFeeLock_${savedUserId}`);
+                    if (savedLock) {
+                        currentUser.monthlyFeeLock = savedLock;
+                    }
+                    
+                    // Charger la date du dernier prélèvement
+                    const savedLastFee = localStorage.getItem(`lastMaintenanceFee_${savedUserId}`);
+                    if (savedLastFee) {
+                        currentUser.lastMaintenanceFeeDate = savedLastFee;
+                    }
+                    
+                    // Filtrer les transactions des 29 derniers jours
+                    if (currentUser.transactions) {
+                        const originalCount = currentUser.transactions.length;
+                        currentUser.transactions = filterLast29DaysTransactions(currentUser.transactions);
+                        if (originalCount !== currentUser.transactions.length) {
+                            console.log(`Transactions filtrées: ${originalCount} -> ${currentUser.transactions.length} (conservation 29 jours)`);
+                        }
+                    }
+                    
+                    // Filtrer l'historique des frais (garder tous)
+                    if (currentUser.feesHistory) {
+                        currentUser.feesHistory = currentUser.feesHistory || [];
+                    }
+                    
+                    showApp();
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        // ============================================
+        // SAUVEGARDE AUTOMATIQUE TOUTES LES 5 SECONDES
+        // ============================================
+        function saveAllData() {
+            if (!currentUser) return;
+            
+            // Filtrer avant sauvegarde pour ne garder que 29 jours
+            const filteredTransactions = filterLast29DaysTransactions(currentUser.transactions);
+            if (filteredTransactions.length !== currentUser.transactions.length) {
+                currentUser.transactions = filteredTransactions;
+            }
+            
+            const dynamicData = {
+                balance: currentUser.balance,
+                transactions: currentUser.transactions,
+                familyMembers: currentUser.familyMembers,
+                feesHistory: currentUser.feesHistory,
+                lastMaintenanceFeeDate: currentUser.lastMaintenanceFeeDate,
+                pendingRecharge: currentUser.pendingRecharge,
+                lastCleanupDate: currentUser.lastCleanupDate,
+                monthlyFeeLock: currentUser.monthlyFeeLock
+            };
+            
+            USERS_DATABASE.saveToLocalStorage(currentUser.id, dynamicData);
+            localStorage.setItem(`balance_${currentUser.id}`, currentUser.balance);
+            localStorage.setItem(`lastUpdate_${currentUser.id}`, new Date().toISOString());
+            
+            if (currentUser.lastMaintenanceFeeDate) {
+                localStorage.setItem(`lastMaintenanceFee_${currentUser.id}`, currentUser.lastMaintenanceFeeDate);
+            }
+            if (currentUser.monthlyFeeLock) {
+                localStorage.setItem(`monthlyFeeLock_${currentUser.id}`, currentUser.monthlyFeeLock);
+            }
+            
+            localStorage.setItem('isLoggedIn', isLoggedIn);
+            if (currentUser) localStorage.setItem('currentUserId', currentUser.id);
+        }
+        
+        function startAutoSave() {
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+            }
+            autoSaveInterval = setInterval(function() {
+                if (isLoggedIn && currentUser) {
+                    saveAllData();
+                    if (autoSaveIndicator) {
+                        autoSaveIndicator.style.backgroundColor = '#4caf50';
+                        setTimeout(() => {
+                            if (autoSaveIndicator) autoSaveIndicator.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                        }, 500);
+                    }
+                    if (lastSaveTimeSpan) {
+                        const now = new Date();
+                        lastSaveTimeSpan.textContent = `Dernière sauvegarde: ${now.toLocaleTimeString('fr-FR')}`;
+                    }
+                    if (dataStatusSpan) {
+                        dataStatusSpan.style.backgroundColor = '#4caf50';
+                        setTimeout(() => {
+                            if (dataStatusSpan) dataStatusSpan.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                        }, 1000);
+                    }
+                }
+            }, 5000);
+        }
+        
+        function stopAutoSave() {
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+                autoSaveInterval = null;
+            }
+        }
+        
+        // ============================================
+        // NETTOYAGE ET FILTRAGE
+        // ============================================
         function runDailyCleanup() {
             if (!currentUser) return;
             
@@ -1344,36 +1479,8 @@
                 currentUser.lastCleanupDate = now;
                 
                 updateUI();
-                saveToDatabase();
+                saveAllData();
                 showNotif(`🗑️ ${deletedCount} ancienne(s) transaction(s) supprimée(s) (plus de ${TRANSACTION_RETENTION_DAYS} jours)`, 'info');
-            }
-        }
-        
-        function startAutoSave() {
-            if (autoSaveInterval) {
-                clearInterval(autoSaveInterval);
-            }
-            autoSaveInterval = setInterval(function() {
-                if (isLoggedIn && currentUser) {
-                    saveToDatabase();
-                    if (autoSaveIndicator) {
-                        autoSaveIndicator.style.backgroundColor = '#4caf50';
-                        setTimeout(() => {
-                            if (autoSaveIndicator) autoSaveIndicator.style.backgroundColor = 'rgba(0,0,0,0.7)';
-                        }, 500);
-                    }
-                    if (lastSaveTimeSpan) {
-                        const now = new Date();
-                        lastSaveTimeSpan.textContent = `Dernière sauvegarde: ${now.toLocaleTimeString('fr-FR')}`;
-                    }
-                }
-            }, 5000);
-        }
-        
-        function stopAutoSave() {
-            if (autoSaveInterval) {
-                clearInterval(autoSaveInterval);
-                autoSaveInterval = null;
             }
         }
         
@@ -1387,32 +1494,54 @@
                     document.querySelectorAll('.transaction-tab').forEach(t => t.classList.remove('active'));
                     document.querySelectorAll('.transaction-tab-content').forEach(c => c.classList.remove('active'));
                     this.classList.add('active');
-                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                    const activeTab = document.getElementById(`${tabId}-tab`);
+                    if (activeTab) activeTab.classList.add('active');
                 });
             });
             
-            document.getElementById('fedapay-recharge-btn').addEventListener('click', handleFedaPayPayment);
-            document.getElementById('send-whatsapp-confirmation').addEventListener('click', sendWhatsAppConfirmation);
+            const fedapayBtn = document.getElementById('fedapay-recharge-btn');
+            if (fedapayBtn) fedapayBtn.addEventListener('click', handleFedaPayPayment);
             
-            document.getElementById('achat-btn').addEventListener('click', () => openModal('achat-modal'));
-            document.getElementById('recevoir-btn').addEventListener('click', () => openModal('recevoir-modal'));
-            document.getElementById('retrait-btn').addEventListener('click', () => openModal('retrait-modal'));
-            document.getElementById('envoyer-btn').addEventListener('click', () => openModal('send-modal'));
-            document.getElementById('add-family-btn').addEventListener('click', () => openModal('add-family-modal'));
+            const sendWhatsappBtn = document.getElementById('send-whatsapp-confirmation');
+            if (sendWhatsappBtn) sendWhatsappBtn.addEventListener('click', sendWhatsAppConfirmation);
+            
+            const achatBtn = document.getElementById('achat-btn');
+            if (achatBtn) achatBtn.addEventListener('click', () => openModal('achat-modal'));
+            
+            const recevoirBtn = document.getElementById('recevoir-btn');
+            if (recevoirBtn) recevoirBtn.addEventListener('click', () => openModal('recevoir-modal'));
+            
+            const retraitBtn = document.getElementById('retrait-btn');
+            if (retraitBtn) retraitBtn.addEventListener('click', () => openModal('retrait-modal'));
+            
+            const envoyerBtn = document.getElementById('envoyer-btn');
+            if (envoyerBtn) envoyerBtn.addEventListener('click', () => openModal('send-modal'));
+            
+            const addFamilyBtn = document.getElementById('add-family-btn');
+            if (addFamilyBtn) addFamilyBtn.addEventListener('click', () => openModal('add-family-modal'));
             
             document.querySelectorAll('.close-modal').forEach(btn => {
                 btn.addEventListener('click', () => closeAllModals());
             });
             
-            document.getElementById('achat-form').addEventListener('submit', handleAchat);
-            document.getElementById('recevoir-form').addEventListener('submit', handleRecevoir);
-            document.getElementById('retrait-form').addEventListener('submit', handleRetrait);
-            document.getElementById('send-form').addEventListener('submit', handleSend);
-            document.getElementById('add-family-form').addEventListener('submit', handleAddFamily);
+            const achatForm = document.getElementById('achat-form');
+            if (achatForm) achatForm.addEventListener('submit', handleAchat);
             
-            document.getElementById('retrait-montant').addEventListener('input', updateRetraitFees);
+            const recevoirForm = document.getElementById('recevoir-form');
+            if (recevoirForm) recevoirForm.addEventListener('submit', handleRecevoir);
             
-            // Vérifier les frais toutes les heures (mais ne prélève qu'une fois par mois)
+            const retraitForm = document.getElementById('retrait-form');
+            if (retraitForm) retraitForm.addEventListener('submit', handleRetrait);
+            
+            const sendForm = document.getElementById('send-form');
+            if (sendForm) sendForm.addEventListener('submit', handleSend);
+            
+            const addFamilyForm = document.getElementById('add-family-form');
+            if (addFamilyForm) addFamilyForm.addEventListener('submit', handleAddFamily);
+            
+            const retraitMontantInput = document.getElementById('retrait-montant');
+            if (retraitMontantInput) retraitMontantInput.addEventListener('input', updateRetraitFees);
+            
             setInterval(() => {
                 if (isLoggedIn && currentUser) {
                     checkAndApplyMaintenanceFee();
@@ -1421,35 +1550,47 @@
             }, 3600000);
         }
         
-        // Vérification des frais d'entretien mensuels (UNE SEULE FOIS PAR MOIS)
+        // ============================================
+        // GESTION DES FRAIS D'ENTRETIEN (50 FCFA)
+        // ============================================
+        function isFeeAlreadyAppliedForCurrentMonth() {
+            if (!currentUser || !currentUser.lastMaintenanceFeeDate) return false;
+            
+            const lastFeeDate = new Date(currentUser.lastMaintenanceFeeDate);
+            const now = new Date();
+            
+            return (lastFeeDate.getMonth() === now.getMonth() && 
+                    lastFeeDate.getFullYear() === now.getFullYear());
+        }
+        
+        function isMonthlyFeeLocked() {
+            if (!currentUser || !currentUser.monthlyFeeLock) return false;
+            
+            const lockDate = new Date(currentUser.monthlyFeeLock);
+            const now = new Date();
+            
+            return (lockDate.getMonth() === now.getMonth() && 
+                    lockDate.getFullYear() === now.getFullYear());
+        }
+        
         function checkAndApplyMaintenanceFee() {
             if (!currentUser) return false;
             
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
+            const feeAlreadyApplied = isFeeAlreadyAppliedForCurrentMonth();
+            const feeLocked = isMonthlyFeeLocked();
             
-            let feeAlreadyApplied = false;
-            
-            // Vérifier si les frais ont déjà été appliqués ce mois-ci
-            if (currentUser.lastMaintenanceFeeDate) {
-                const lastFeeDate = new Date(currentUser.lastMaintenanceFeeDate);
-                if (lastFeeDate.getMonth() === currentMonth && lastFeeDate.getFullYear() === currentYear) {
-                    feeAlreadyApplied = true;
-                }
+            if (feeAlreadyApplied || feeLocked) {
+                updateFeeStatusDisplay(true);
+                return false;
             }
             
-            updateFeeStatusDisplay(feeAlreadyApplied);
+            updateFeeStatusDisplay(false);
             
-            // Appliquer les frais UNIQUEMENT si non déjà appliqués ce mois-ci ET solde suffisant
-            if (!feeAlreadyApplied && currentUser.balance > MIN_BALANCE_FOR_FEE) {
+            if (currentUser.balance > MIN_BALANCE_FOR_FEE) {
                 applyMaintenanceFee();
                 return true;
-            } else if (!feeAlreadyApplied && currentUser.balance <= MIN_BALANCE_FOR_FEE) {
+            } else {
                 showNotif(`⚠️ Frais d'entretien mensuel (${formatCurrency(MAINTENANCE_FEE)}) non appliqués : solde insuffisant (minimum ${formatCurrency(MIN_BALANCE_FOR_FEE)})`, 'warning');
-            } else if (feeAlreadyApplied) {
-                // Afficher un message silencieux ou rien du tout
-                console.log("Frais déjà appliqués ce mois-ci");
             }
             
             return false;
@@ -1457,6 +1598,11 @@
         
         function applyMaintenanceFee() {
             if (!currentUser || currentUser.balance <= MIN_BALANCE_FOR_FEE) return false;
+            
+            if (isFeeAlreadyAppliedForCurrentMonth() || isMonthlyFeeLocked()) {
+                console.log("Tentative de double prélèvement bloquée");
+                return false;
+            }
             
             const now = new Date();
             const feeAmount = MAINTENANCE_FEE;
@@ -1482,6 +1628,7 @@
             });
             
             currentUser.lastMaintenanceFeeDate = now;
+            currentUser.monthlyFeeLock = now;
             
             updateFeeStatusDisplay(true);
             updateFeesHistoryDisplay();
@@ -1489,11 +1636,13 @@
             
             showNotif(`🏦 Frais d'entretien mensuel de ${formatCurrency(feeAmount)} prélevés pour ${monthName}`, 'warning');
             
-            saveToDatabase();
+            saveAllData();
             return true;
         }
         
         function updateFeeStatusDisplay(feeApplied) {
+            if (!feeStatusBadge || !maintenanceFeeInfo) return;
+            
             const now = new Date();
             const monthName = now.toLocaleString('fr-FR', { month: 'long' });
             
@@ -1531,7 +1680,7 @@
                 const div = document.createElement('div');
                 div.className = 'fee-history-item';
                 div.innerHTML = `
-                    <span><i class="fas fa-receipt"></i> ${fee.type} - ${fee.month || ''}</span>
+                    <span><i class="fas fa-receipt"></i> ${escapeHtml(fee.type)} - ${escapeHtml(fee.month || '')}</span>
                     <span style="color: #d32f2f;">-${formatCurrency(fee.amount)}</span>
                     <span style="font-size: 0.7rem; color: #999;">${dateStr}</span>
                 `;
@@ -1539,6 +1688,9 @@
             });
         }
         
+        // ============================================
+        // GESTION DE L'AUTHENTIFICATION
+        // ============================================
         function handleLogin(e) {
             e.preventDefault();
             const username = document.getElementById('username').value;
@@ -1550,18 +1702,38 @@
                 currentUser = user;
                 isLoggedIn = true;
                 
-                // Charger le solde sauvegardé depuis le localStorage
-                const savedBalance = USERS_DATABASE.getSavedBalance(currentUser.id);
-                if (savedBalance !== null && savedBalance !== currentUser.balance) {
-                    currentUser.balance = savedBalance;
-                    showNotif(`💰 Solde chargé: ${formatCurrency(savedBalance)}`, 'success');
+                // Chargement des données sauvegardées
+                const savedBalance = localStorage.getItem(`balance_${currentUser.id}`);
+                if (savedBalance !== null) {
+                    currentUser.balance = parseInt(savedBalance);
+                }
+                
+                const savedLock = localStorage.getItem(`monthlyFeeLock_${currentUser.id}`);
+                if (savedLock) {
+                    currentUser.monthlyFeeLock = savedLock;
+                }
+                
+                const savedLastFee = localStorage.getItem(`lastMaintenanceFee_${currentUser.id}`);
+                if (savedLastFee) {
+                    currentUser.lastMaintenanceFeeDate = savedLastFee;
+                }
+                
+                // Filtrer les transactions des 29 derniers jours
+                if (currentUser.transactions) {
+                    currentUser.transactions = filterLast29DaysTransactions(currentUser.transactions);
                 }
                 
                 showApp();
                 loginError.style.display = 'none';
-                saveToDatabase();
-                checkAndApplyMaintenanceFee();
+                saveAllData();
                 runDailyCleanup();
+                showNotif(`💰 Solde chargé: ${formatCurrency(currentUser.balance)}`, 'success');
+                if (dataStatusSpan) {
+                    dataStatusSpan.textContent = '✅ Données chargées';
+                    setTimeout(() => {
+                        if (dataStatusSpan) dataStatusSpan.textContent = '📊 Données chargées';
+                    }, 3000);
+                }
             } else {
                 loginError.style.display = 'block';
             }
@@ -1571,13 +1743,18 @@
             loginContainer.style.display = 'none';
             appContainer.style.display = 'block';
             updateUI();
+            setTimeout(() => {
+                if (isLoggedIn && currentUser) {
+                    checkAndApplyMaintenanceFee();
+                }
+            }, 1000);
         }
         
         function handleLogout() {
             isLoggedIn = false;
             stopAutoSave();
             currentUser = null;
-            saveToDatabase();
+            saveAllData();
             loginContainer.style.display = 'flex';
             appContainer.style.display = 'none';
             document.getElementById('login-form').reset();
@@ -1621,7 +1798,7 @@
             const displayTransactions = [...recentTransactions].reverse().slice(0, 20);
             
             if (displayTransactions.length === 0) {
-                transactionList.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">Aucune transaction récente</div>';
+                transactionList.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">Aucune transaction récente (29 jours)</div>';
                 return;
             }
             
@@ -1630,7 +1807,7 @@
                 li.className = 'transaction-item';
                 li.innerHTML = `
                     <div class="transaction-info">
-                        <div class="transaction-name">${t.name}</div>
+                        <div class="transaction-name">${escapeHtml(t.name)}</div>
                         <div class="transaction-date">${formatDate(t.date)}</div>
                     </div>
                     <div class="transaction-amount ${t.amount >= 0 ? 'amount-positive' : 'amount-negative'}">
@@ -1641,6 +1818,16 @@
             });
         }
         
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
         function renderFamilyMembers() {
             if (!familyMembersGrid) return;
             familyMembersGrid.innerHTML = '';
@@ -1648,13 +1835,13 @@
                 const card = document.createElement('div');
                 card.className = 'family-member-card';
                 card.innerHTML = `
-                    <div class="family-avatar">${m.name.charAt(0)}</div>
+                    <div class="family-avatar">${escapeHtml(m.name.charAt(0))}</div>
                     <div class="family-info">
-                        <div class="family-name">${m.name}</div>
-                        <div class="family-phone">${m.phone}</div>
-                        <div class="family-relation">${m.relation}</div>
+                        <div class="family-name">${escapeHtml(m.name)}</div>
+                        <div class="family-phone">${escapeHtml(m.phone)}</div>
+                        <div class="family-relation">${escapeHtml(m.relation)}</div>
                     </div>
-                    <button class="send-money-btn" onclick="quickSend('${m.phone}', '${m.name}')">
+                    <button class="send-money-btn" onclick="quickSend('${escapeHtml(m.phone)}', '${escapeHtml(m.name)}')">
                         <i class="fas fa-paper-plane"></i> Envoyer
                     </button>
                 `;
@@ -1677,27 +1864,34 @@
         }
         
         function updateRetraitFees() {
-            const montant = parseInt(document.getElementById('retrait-montant').value) || 0;
+            const montantInput = document.getElementById('retrait-montant');
+            if (!montantInput) return;
+            const montant = parseInt(montantInput.value) || 0;
             if (montant > 0) {
                 const frais = Math.round(montant * 0.09);
                 const total = montant + frais;
                 const retraitMontantDisplay = document.getElementById('retrait-montant-display');
                 const retraitFraisDisplay = document.getElementById('retrait-frais-display');
                 const retraitTotalDisplay = document.getElementById('retrait-total-display');
-                const retraitFeesInfo = document.getElementById('retrait-fees-info');
+                const retraitFeesInfoDiv = document.getElementById('retrait-fees-info');
                 
                 if (retraitMontantDisplay) retraitMontantDisplay.textContent = formatCurrency(montant);
                 if (retraitFraisDisplay) retraitFraisDisplay.textContent = formatCurrency(frais);
                 if (retraitTotalDisplay) retraitTotalDisplay.textContent = formatCurrency(total);
-                if (retraitFeesInfo) retraitFeesInfo.style.display = 'block';
+                if (retraitFeesInfoDiv) retraitFeesInfoDiv.style.display = 'block';
             } else {
-                const retraitFeesInfo = document.getElementById('retrait-fees-info');
-                if (retraitFeesInfo) retraitFeesInfo.style.display = 'none';
+                const retraitFeesInfoDiv = document.getElementById('retrait-fees-info');
+                if (retraitFeesInfoDiv) retraitFeesInfoDiv.style.display = 'none';
             }
         }
         
+        // ============================================
+        // PAIEMENTS ET TRANSACTIONS
+        // ============================================
         function handleFedaPayPayment() {
             const btn = document.getElementById('fedapay-recharge-btn');
+            if (!btn) return;
+            
             const originalText = btn.innerHTML;
             btn.innerHTML = '<div class="loading-spinner"></div> Chargement...';
             btn.disabled = true;
@@ -1717,7 +1911,7 @@
             
             pendingPaymentAmount = montantInt;
             currentUser.pendingRecharge = montantInt;
-            saveToDatabase();
+            saveAllData();
             
             sessionStorage.setItem('pendingRecharge', montantInt);
             sessionStorage.setItem('userEmail', currentUser.email);
@@ -1858,7 +2052,7 @@
             });
             
             updateUI();
-            saveToDatabase();
+            saveAllData();
             
             const message = `✅ CONFIRMATION DE PAIEMENT FEDAPAY - VALIDÉ%0A%0A` +
                 `👤 Client: ${name}%0A` +
@@ -1879,16 +2073,22 @@
             if (whatsappPaymentSection) whatsappPaymentSection.style.display = 'none';
             pendingPaymentAmount = null;
             currentUser.pendingRecharge = null;
-            saveToDatabase();
+            saveAllData();
             
             showNotif(`✅ ${formatCurrency(net)} crédité sur votre compte !`, 'success');
         }
         
         function handleAchat(e) {
             e.preventDefault();
-            const commercant = document.getElementById('commercant-nom').value;
-            const montant = parseInt(document.getElementById('achat-montant').value);
-            const description = document.getElementById('achat-description').value || "Achat";
+            const commercant = document.getElementById('commercant-nom');
+            const montantInput = document.getElementById('achat-montant');
+            const description = document.getElementById('achat-description');
+            
+            if (!commercant || !montantInput) return;
+            
+            const commercantNom = commercant.value;
+            const montant = parseInt(montantInput.value);
+            const descriptionText = description ? description.value || "Achat" : "Achat";
             
             if (montant > currentUser.balance) {
                 alert("Solde insuffisant");
@@ -1898,43 +2098,52 @@
             currentUser.balance -= montant;
             currentUser.transactions.unshift({
                 id: Date.now(),
-                name: `Achat chez ${commercant} - ${description}`,
+                name: `Achat chez ${commercantNom} - ${descriptionText}`,
                 amount: -montant,
                 date: new Date(),
                 type: "expense"
             });
             
             updateUI();
-            saveToDatabase();
+            saveAllData();
             closeAllModals();
             showNotif(`Achat de ${formatCurrency(montant)} effectué !`, 'success');
         }
         
         function handleRecevoir(e) {
             e.preventDefault();
-            const expediteur = document.getElementById('expediteur-nom').value;
-            const phone = document.getElementById('expediteur-phone').value;
-            const montant = parseInt(document.getElementById('recevoir-montant').value);
+            const expediteur = document.getElementById('expediteur-nom');
+            const phone = document.getElementById('expediteur-phone');
+            const montantInput = document.getElementById('recevoir-montant');
+            
+            if (!expediteur || !phone || !montantInput) return;
+            
+            const expediteurNom = expediteur.value;
+            const montant = parseInt(montantInput.value);
             
             currentUser.balance += montant;
             currentUser.transactions.unshift({
                 id: Date.now(),
-                name: `Réception de ${expediteur}`,
+                name: `Réception de ${expediteurNom}`,
                 amount: montant,
                 date: new Date(),
                 type: "income"
             });
             
             updateUI();
-            saveToDatabase();
+            saveAllData();
             closeAllModals();
-            showNotif(`${formatCurrency(montant)} reçu de ${expediteur} !`, 'success');
+            showNotif(`${formatCurrency(montant)} reçu de ${expediteurNom} !`, 'success');
         }
         
         function handleRetrait(e) {
             e.preventDefault();
-            const montant = parseInt(document.getElementById('retrait-montant').value);
-            const numero = document.getElementById('retrait-numero').value;
+            const montantInput = document.getElementById('retrait-montant');
+            const numero = document.getElementById('retrait-numero');
+            
+            if (!montantInput || !numero) return;
+            
+            const montant = parseInt(montantInput.value);
             const frais = Math.round(montant * 0.09);
             const total = montant + frais;
             
@@ -1953,17 +2162,24 @@
             });
             
             updateUI();
-            saveToDatabase();
+            saveAllData();
             closeAllModals();
             showNotif(`Demande de retrait de ${formatCurrency(montant)} envoyée !`, 'success');
         }
         
         function handleSend(e) {
             e.preventDefault();
-            const phone = document.getElementById('send-phone').value;
-            const name = document.getElementById('send-name').value || phone;
-            const montant = parseInt(document.getElementById('send-montant').value);
-            const motif = document.getElementById('send-motif').value || "Transfert familial";
+            const phone = document.getElementById('send-phone');
+            const name = document.getElementById('send-name');
+            const montantInput = document.getElementById('send-montant');
+            const motif = document.getElementById('send-motif');
+            
+            if (!phone || !montantInput) return;
+            
+            const phoneValue = phone.value;
+            const nameValue = name ? name.value || phoneValue : phoneValue;
+            const montant = parseInt(montantInput.value);
+            const motifValue = motif ? motif.value || "Transfert familial" : "Transfert familial";
             
             if (montant > currentUser.balance) {
                 alert("Solde insuffisant");
@@ -1973,35 +2189,37 @@
             currentUser.balance -= montant;
             currentUser.transactions.unshift({
                 id: Date.now(),
-                name: `Envoi à ${name} - ${motif}`,
+                name: `Envoi à ${nameValue} - ${motifValue}`,
                 amount: -montant,
                 date: new Date(),
                 type: "expense"
             });
             
             updateUI();
-            saveToDatabase();
+            saveAllData();
             closeAllModals();
-            showNotif(`${formatCurrency(montant)} envoyé à ${name} !`, 'success');
+            showNotif(`${formatCurrency(montant)} envoyé à ${nameValue} !`, 'success');
         }
         
         function handleAddFamily(e) {
             e.preventDefault();
-            const name = document.getElementById('family-name').value;
-            const phone = document.getElementById('family-phone').value;
-            const relation = document.getElementById('family-relation').value;
+            const name = document.getElementById('family-name');
+            const phone = document.getElementById('family-phone');
+            const relation = document.getElementById('family-relation');
+            
+            if (!name || !phone || !relation) return;
             
             currentUser.familyMembers.push({
                 id: Date.now(),
-                name: name,
-                phone: phone,
-                relation: relation
+                name: name.value,
+                phone: phone.value,
+                relation: relation.value
             });
             
             renderFamilyMembers();
-            saveToDatabase();
+            saveAllData();
             closeAllModals();
-            showNotif(`${name} ajouté à votre famille !`, 'success');
+            showNotif(`${name.value} ajouté à votre famille !`, 'success');
         }
         
         window.quickSend = function(phone, name) {
@@ -2045,48 +2263,19 @@
             }, 3000);
         }
         
-        function saveToDatabase() {
-            if (currentUser) {
-                const dynamicData = {
-                    balance: currentUser.balance,
-                    transactions: currentUser.transactions,
-                    familyMembers: currentUser.familyMembers,
-                    feesHistory: currentUser.feesHistory,
-                    lastMaintenanceFeeDate: currentUser.lastMaintenanceFeeDate,
-                    pendingRecharge: currentUser.pendingRecharge,
-                    lastCleanupDate: currentUser.lastCleanupDate
-                };
-                USERS_DATABASE.saveToLocalStorage(currentUser.id, dynamicData);
-                localStorage.setItem(`balance_${currentUser.id}`, currentUser.balance);
-                localStorage.setItem(`lastUpdate_${currentUser.id}`, new Date().toISOString());
+        // ============================================
+        // INITIALISATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const dataLoaded = loadUserData();
+            setupEventListeners();
+            checkForPendingPayment();
+            startAutoSave();
+            if (!dataLoaded) {
+                loginContainer.style.display = 'flex';
+                appContainer.style.display = 'none';
             }
-            localStorage.setItem('isLoggedIn', isLoggedIn);
-            if (currentUser) localStorage.setItem('currentUserId', currentUser.id);
-        }
-        
-        function loadData() {
-            const savedUserId = localStorage.getItem('currentUserId');
-            const isLoggedInSaved = localStorage.getItem('isLoggedIn') === 'true';
-            
-            if (savedUserId && isLoggedInSaved) {
-                const user = USERS_DATABASE.loadFromLocalStorage(parseInt(savedUserId));
-                if (user) {
-                    currentUser = user;
-                    isLoggedIn = true;
-                    
-                    // Vérifier et charger le solde sauvegardé
-                    const savedBalance = localStorage.getItem(`balance_${savedUserId}`);
-                    if (savedBalance !== null && parseInt(savedBalance) !== currentUser.balance) {
-                        currentUser.balance = parseInt(savedBalance);
-                        showNotif(`💰 Solde chargé: ${formatCurrency(currentUser.balance)}`, 'success');
-                    }
-                    
-                    showApp();
-                    checkAndApplyMaintenanceFee();
-                    runDailyCleanup();
-                }
-            }
-        }
+        });
     </script>
 </body>
 </html>
