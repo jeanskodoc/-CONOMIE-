@@ -547,16 +547,6 @@
             margin-top: 15px;
         }
         
-        .whatsapp-info {
-            background-color: #25D366;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 12px 0;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-        
         .fedapay-section {
             margin: 15px 0;
             padding: 12px;
@@ -1088,20 +1078,20 @@
         // CONSTANTES
         // ============================================
         const FEDAPAY_PAYMENT_URL = "https://me.fedapay.com/lmuOo1Nv";
-        const MAINTENANCE_FEE = 200; // Frais mensuels à 200 FCFA
-        const MIN_BALANCE_FOR_FEE = 200; // Minimum 200 FCFA pour prélever
+        const MAINTENANCE_FEE = 200;
+        const MIN_BALANCE_FOR_FEE = 200;
         const RECHARGE_FEE_PERCENTAGE = 0.10;
         const WITHDRAWAL_FEE_PERCENTAGE = 0.25;
-        const TRANSACTION_RETENTION_DAYS = 29; // 29 jours de conservation
+        const TRANSACTION_RETENTION_DAYS = 29;
         
-        // Comptes enregistrés - Le solde sera chargé depuis localStorage
+        // Comptes enregistrés
         let currentUser = {
             id: 1,
             username: "KOLA",
             fullname: "KOLA Maniwah Essohouna",
             phone: "+228 93 38 75 95",
             email: "kola@example.com",
-            balance: 1000, // Solde temporaire, sera remplacé par le solde sauvegardé
+            balance: 1000,
             transactions: [],
             feesHistory: [],
             lastMaintenanceFeeDate: null,
@@ -1146,7 +1136,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadData();
             setupEventListeners();
-            checkForPendingPayment();
             startAutoSave();
             if (isLoggedIn) {
                 showApp();
@@ -1280,7 +1269,7 @@
         }
         
         // ============================================
-        // GESTION DES FRAIS D'ENTRETIEN MENSUELS (200 FCFA)
+        // GESTION DES FRAIS D'ENTRETIEN MENSUELS
         // ============================================
         function checkAndApplyMaintenanceFee() {
             if (!currentUser) return false;
@@ -1341,16 +1330,7 @@
             updateFeesHistoryDisplay();
             updateUI();
             
-            const msg = `🏦 FRAIS D'ENTRETIEN MENSUEL%0A%0A` +
-                `👤 Client: ${currentUser.fullname}%0A` +
-                `💰 Montant prélevé: ${formatCurrency(feeAmount)}%0A` +
-                `💵 Ancien solde: ${formatCurrency(currentUser.balance + feeAmount)}%0A` +
-                `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
-                `📅 Période: ${monthName}%0A` +
-                `🕐 Date: ${now.toLocaleString('fr-FR')}`;
-            
-            window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
-            showNotif(`Frais d'entretien mensuel de ${formatCurrency(feeAmount)} prélevés`, 'warning');
+            showNotif(`Frais d'entretien mensuel de ${formatCurrency(feeAmount)} prélevés pour ${monthName}`, 'warning');
             
             saveData();
             return true;
@@ -1552,14 +1532,13 @@
             window.location.href = FEDAPAY_PAYMENT_URL;
         }
         
-        function checkForPendingPayment() {
+        // Fonction pour vérifier les paiements en attente (sans envoi automatique WhatsApp)
+        function checkPendingPayment() {
             const pendingRecharge = sessionStorage.getItem('pendingRecharge');
             if (pendingRecharge && isLoggedIn) {
                 const montant = parseInt(pendingRecharge);
                 const frais = Math.round(montant * RECHARGE_FEE_PERCENTAGE);
                 const net = montant - frais;
-                
-                pendingPaymentAmount = montant;
                 
                 currentUser.balance += net;
                 currentUser.transactions.unshift({
@@ -1572,22 +1551,22 @@
                 
                 updateUI();
                 saveData();
-                
-                const msg = `✅ RECHARGEMENT MASTERCARD%0A%0A` +
-                    `👤 Client: ${currentUser.fullname}%0A` +
-                    `💰 Montant saisi: ${formatCurrency(montant)}%0A` +
-                    `📊 Frais (10%): ${formatCurrency(frais)}%0A` +
-                    `✨ Montant net crédité: ${formatCurrency(net)}%0A` +
-                    `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
-                    `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
-                
-                window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
                 showNotif(`✅ ${formatCurrency(net)} crédité sur votre compte !`, 'success');
                 
                 sessionStorage.removeItem('pendingRecharge');
-                pendingPaymentAmount = null;
+                sessionStorage.removeItem('userEmail');
+                sessionStorage.removeItem('userPhone');
+                sessionStorage.removeItem('userName');
+                sessionStorage.removeItem('paymentTimestamp');
             }
         }
+        
+        // Appel de la vérification des paiements en attente au chargement
+        setTimeout(function() {
+            if (isLoggedIn) {
+                checkPendingPayment();
+            }
+        }, 500);
         
         function handleAchat(e) {
             e.preventDefault();
@@ -1615,16 +1594,6 @@
                 type: "expense"
             });
             
-            const msg = `🛒 ACHAT EFFECTUÉ%0A%0A` +
-                `👤 Client: ${currentUser.fullname}%0A` +
-                `🏪 Commerçant: ${commercantNom}%0A` +
-                `📝 Description: ${descriptionText}%0A` +
-                `💰 Montant: ${formatCurrency(montant)}%0A` +
-                `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
-                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
-            
-            window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
-            
             updateUI();
             saveData();
             closeAllModals();
@@ -1651,16 +1620,6 @@
                 date: new Date(),
                 type: "income"
             });
-            
-            const msg = `📥 RÉCEPTION D'ARGENT%0A%0A` +
-                `👤 Bénéficiaire: ${currentUser.fullname}%0A` +
-                `📤 Expéditeur: ${expediteurNom}%0A` +
-                `📞 Téléphone expéditeur: ${expediteurPhone}%0A` +
-                `💰 Montant reçu: ${formatCurrency(montant)}%0A` +
-                `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
-                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
-            
-            window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
             
             updateUI();
             saveData();
@@ -1693,17 +1652,6 @@
                 date: new Date(),
                 type: "expense"
             });
-            
-            const msg = `💸 DEMANDE DE RETRAIT%0A%0A` +
-                `👤 Client: ${currentUser.fullname}%0A` +
-                `💰 Montant demandé: ${formatCurrency(montant)}%0A` +
-                `📊 Frais (25%): ${formatCurrency(frais)}%0A` +
-                `💳 Total débité: ${formatCurrency(total)}%0A` +
-                `📞 Numéro de réception: ${numeroReception}%0A` +
-                `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
-                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
-            
-            window.open(`https://wa.me/22892871605?text=${msg}`, '_blank');
             
             updateUI();
             saveData();
@@ -1777,13 +1725,11 @@
                     currentUser = data;
                     isLoggedIn = isLoggedInSaved;
                     
-                    // Charger le solde sauvegardé (priorité au solde récemment sauvegardé)
                     if (savedBalance !== null) {
                         currentUser.balance = parseInt(savedBalance);
                         showNotif(`💰 Solde chargé: ${formatCurrency(currentUser.balance)}`, 'success');
                     }
                     
-                    // S'assurer que les transactions et l'historique existent
                     if (!currentUser.transactions) currentUser.transactions = [];
                     if (!currentUser.feesHistory) currentUser.feesHistory = [];
                     if (!currentUser.lastCleanupDate) currentUser.lastCleanupDate = null;
