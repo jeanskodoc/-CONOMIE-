@@ -789,12 +789,25 @@
             font-size: 9px;
             z-index: 1000;
         }
+        
+        .cleanup-info {
+            position: fixed;
+            bottom: 35px;
+            left: 10px;
+            background: rgba(0,0,0,0.5);
+            color: #ff9800;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 8px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
     <div class="save-notification" id="save-notification"></div>
-    <div class="auto-save-indicator" id="auto-save-indicator">💾 Sauvegarde automatique active</div>
+    <div class="auto-save-indicator" id="auto-save-indicator">💾 Sauvegarde auto active</div>
     <div class="last-save-time" id="last-save-time">Dernière sauvegarde: --</div>
+    <div class="cleanup-info" id="cleanup-info">🗑️ Transactions supprimées après 29 jours</div>
     
     <div class="login-container" id="login-container">
         <div class="login-box">
@@ -927,12 +940,12 @@
                         <div class="stats">
                             <div class="stat-card">
                                 <div class="stat-icon">📈</div>
-                                <div>Revenus</div>
+                                <div>Revenus (30j)</div>
                                 <div class="stat-value stat-income" id="month-income">0 FCFA</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-icon">📉</div>
-                                <div>Dépenses</div>
+                                <div>Dépenses (30j)</div>
                                 <div class="stat-value stat-expense" id="month-expense">0 FCFA</div>
                             </div>
                         </div>
@@ -968,7 +981,7 @@
                     </div>
                     
                     <div class="transactions">
-                        <h3 style="margin-bottom: 10px;">📋 Historique des transactions</h3>
+                        <h3 style="margin-bottom: 10px;">📋 Historique des transactions (30 derniers jours)</h3>
                         <ul class="transaction-list" id="transaction-list"></ul>
                     </div>
                     
@@ -1140,7 +1153,8 @@
     <footer>
         <div class="container">
             <p>Portefeuille Visa Togo &copy; 2025 - Paiements sécurisés par FedaPay</p>
-            <p style="font-size: 0.75rem; margin-top: 5px;">Frais d'entretien mensuel: 100 FCFA (prélevés automatiquement si solde > 200 FCFA)</p>
+            <p style="font-size: 0.75rem; margin-top: 5px;">Frais d'entretien mensuel: 100 FCFA (prélevés une fois par mois si solde > 200 FCFA)</p>
+            <p style="font-size: 0.7rem; margin-top: 3px;">📊 Historique des transactions conservé 29 jours</p>
         </div>
     </footer>
 
@@ -1162,7 +1176,7 @@
                 return hash.toString(16);
             }
             
-            // Ajout des utilisateurs avec solde par défaut à 0 (sera remplacé par le solde sauvegardé)
+            // Ajout des utilisateurs
             _users.set(1, {
                 id: 1,
                 username: "KOLA1",
@@ -1181,7 +1195,8 @@
                 ],
                 feesHistory: [],
                 lastMaintenanceFeeDate: null,
-                pendingRecharge: null
+                pendingRecharge: null,
+                lastCleanupDate: null
             });
             
             _users.set(2, {
@@ -1201,7 +1216,8 @@
                 ],
                 feesHistory: [],
                 lastMaintenanceFeeDate: null,
-                pendingRecharge: null
+                pendingRecharge: null,
+                lastCleanupDate: null
             });
             
             return {
@@ -1266,6 +1282,7 @@
         const FEDAPAY_PAYMENT_URL = "https://me.fedapay.com/lmuOo1Nv";
         const MAINTENANCE_FEE = 100;
         const MIN_BALANCE_FOR_FEE = 200;
+        const TRANSACTION_RETENTION_DAYS = 29; // 29 jours de conservation
         
         let currentUser = null;
         let isLoggedIn = false;
@@ -1299,7 +1316,42 @@
             setupEventListeners();
             checkForPendingPayment();
             startAutoSave();
+            runDailyCleanup();
         });
+        
+        // Nettoyage des anciennes transactions (plus de 29 jours)
+        function runDailyCleanup() {
+            if (!currentUser) return;
+            
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            // Vérifier si un nettoyage a déjà été fait aujourd'hui
+            if (currentUser.lastCleanupDate) {
+                const lastCleanup = new Date(currentUser.lastCleanupDate);
+                if (lastCleanup.toDateString() === today.toDateString()) {
+                    return;
+                }
+            }
+            
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - TRANSACTION_RETENTION_DAYS);
+            
+            const oldTransactionsCount = currentUser.transactions.filter(t => new Date(t.date) < cutoffDate).length;
+            
+            // Filtrer les transactions de moins de 29 jours
+            const newTransactions = currentUser.transactions.filter(t => new Date(t.date) >= cutoffDate);
+            
+            if (newTransactions.length !== currentUser.transactions.length) {
+                const deletedCount = currentUser.transactions.length - newTransactions.length;
+                currentUser.transactions = newTransactions;
+                currentUser.lastCleanupDate = now;
+                
+                updateUI();
+                saveToDatabase();
+                showNotif(`🗑️ ${deletedCount} ancienne(s) transaction(s) supprimée(s) (plus de ${TRANSACTION_RETENTION_DAYS} jours)`, 'info');
+            }
+        }
         
         function startAutoSave() {
             if (autoSaveInterval) {
@@ -1364,13 +1416,16 @@
             
             document.getElementById('retrait-montant').addEventListener('input', updateRetraitFees);
             
+            // Vérifier les frais toutes les heures
             setInterval(() => {
                 if (isLoggedIn && currentUser) {
                     checkAndApplyMaintenanceFee();
+                    runDailyCleanup();
                 }
             }, 3600000);
         }
         
+        // Vérification des frais d'entretien mensuels (une seule fois par mois)
         function checkAndApplyMaintenanceFee() {
             if (!currentUser) return false;
             
@@ -1381,6 +1436,7 @@
             let feeAlreadyApplied = false;
             if (currentUser.lastMaintenanceFeeDate) {
                 const lastFeeDate = new Date(currentUser.lastMaintenanceFeeDate);
+                // Vérifier si le dernier prélèvement date du même mois
                 if (lastFeeDate.getMonth() === currentMonth && lastFeeDate.getFullYear() === currentYear) {
                     feeAlreadyApplied = true;
                 }
@@ -1388,6 +1444,7 @@
             
             updateFeeStatusDisplay(feeAlreadyApplied);
             
+            // Appliquer les frais seulement si non déjà appliqués ce mois-ci ET solde suffisant
             if (!feeAlreadyApplied && currentUser.balance > MIN_BALANCE_FOR_FEE) {
                 applyMaintenanceFee();
                 return true;
@@ -1430,7 +1487,7 @@
             updateFeesHistoryDisplay();
             updateUI();
             
-            showNotif(`Frais d'entretien mensuel de ${formatCurrency(feeAmount)} prélevés`, 'warning');
+            showNotif(`🏦 Frais d'entretien mensuel de ${formatCurrency(feeAmount)} prélevés pour ${monthName}`, 'warning');
             
             saveToDatabase();
             return true;
@@ -1467,14 +1524,14 @@
                 return;
             }
             
-            currentUser.feesHistory.slice(0, 10).forEach(fee => {
+            currentUser.feesHistory.slice(0, 12).forEach(fee => {
                 const feeDate = new Date(fee.date);
                 const dateStr = feeDate.toLocaleDateString('fr-FR');
                 
                 const div = document.createElement('div');
                 div.className = 'fee-history-item';
                 div.innerHTML = `
-                    <span><i class="fas fa-receipt"></i> ${fee.type}</span>
+                    <span><i class="fas fa-receipt"></i> ${fee.type} - ${fee.month || ''}</span>
                     <span style="color: #d32f2f;">-${formatCurrency(fee.amount)}</span>
                     <span style="font-size: 0.7rem; color: #999;">${dateStr}</span>
                 `;
@@ -1504,6 +1561,7 @@
                 loginError.style.display = 'none';
                 saveToDatabase();
                 checkAndApplyMaintenanceFee();
+                runDailyCleanup();
             } else {
                 loginError.style.display = 'block';
             }
@@ -1555,12 +1613,20 @@
         function renderTransactions() {
             if (!transactionList) return;
             transactionList.innerHTML = '';
-            const recent = [...currentUser.transactions].reverse().slice(0, 10);
-            if (recent.length === 0) {
-                transactionList.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">Aucune transaction</div>';
+            
+            // Afficher uniquement les transactions des 30 derniers jours
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - TRANSACTION_RETENTION_DAYS);
+            
+            const recentTransactions = currentUser.transactions.filter(t => new Date(t.date) >= cutoffDate);
+            const displayTransactions = [...recentTransactions].reverse().slice(0, 20);
+            
+            if (displayTransactions.length === 0) {
+                transactionList.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">Aucune transaction récente</div>';
                 return;
             }
-            recent.forEach(t => {
+            
+            displayTransactions.forEach(t => {
                 const li = document.createElement('li');
                 li.className = 'transaction-item';
                 li.innerHTML = `
@@ -1599,12 +1665,12 @@
         
         function updateStatistics() {
             const now = new Date();
-            const monthTransactions = currentUser.transactions.filter(t => {
-                const d = new Date(t.date);
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            });
-            const income = monthTransactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
-            const expense = monthTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - TRANSACTION_RETENTION_DAYS);
+            
+            const recentTransactions = currentUser.transactions.filter(t => new Date(t.date) >= cutoffDate);
+            const income = recentTransactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+            const expense = recentTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
             
             const monthIncome = document.getElementById('month-income');
             const monthExpense = document.getElementById('month-expense');
@@ -1989,7 +2055,8 @@
                     familyMembers: currentUser.familyMembers,
                     feesHistory: currentUser.feesHistory,
                     lastMaintenanceFeeDate: currentUser.lastMaintenanceFeeDate,
-                    pendingRecharge: currentUser.pendingRecharge
+                    pendingRecharge: currentUser.pendingRecharge,
+                    lastCleanupDate: currentUser.lastCleanupDate
                 };
                 USERS_DATABASE.saveToLocalStorage(currentUser.id, dynamicData);
                 localStorage.setItem(`balance_${currentUser.id}`, currentUser.balance);
@@ -2018,6 +2085,7 @@
                     
                     showApp();
                     checkAndApplyMaintenanceFee();
+                    runDailyCleanup();
                 }
             }
         }
