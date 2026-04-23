@@ -1609,9 +1609,6 @@
                 showWhatsAppPaymentForm(montant, frais, net);
                 
                 sessionStorage.removeItem('pendingRecharge');
-            } else if (whatsappPaymentSection) {
-                // S'assurer que le formulaire WhatsApp est caché s'il n'y a pas de paiement en attente
-                whatsappPaymentSection.style.display = 'none';
             }
         }
         
