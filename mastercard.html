@@ -784,6 +784,42 @@
             animation: spin 1s ease-in-out infinite;
         }
         
+        .auto-save-indicator {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            z-index: 1000;
+        }
+        
+        .last-save-time {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            z-index: 1000;
+        }
+        
+        .cleanup-info {
+            position: fixed;
+            bottom: 35px;
+            left: 10px;
+            background: rgba(0,0,0,0.5);
+            color: #ff9800;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 8px;
+            z-index: 1000;
+        }
+        
         @media (max-width: 768px) {
             .actions { grid-template-columns: 1fr; }
             .transaction-tab { padding: 8px 12px; font-size: 0.8rem; min-width: 80px; }
@@ -798,6 +834,9 @@
 </head>
 <body>
     <div class="save-notification" id="save-notification"></div>
+    <div class="auto-save-indicator" id="auto-save-indicator">💾 Sauvegarde auto active</div>
+    <div class="last-save-time" id="last-save-time">Dernière sauvegarde: --</div>
+    <div class="cleanup-info" id="cleanup-info">🗑️ Transactions supprimées après 29 jours</div>
     
     <div class="login-container" id="login-container">
         <div class="login-box">
@@ -863,11 +902,10 @@
                 <div class="card balance-card">
                     <div class="balance-label">Solde actuel</div>
                     <div class="balance-amount" id="balance-amount">
-                        <span class="balance-loading" id="balance-loading" style="display: inline-block;"></span>
-                        <span id="balance-text">Vérification des frais...</span>
+                        <span id="balance-text">0 FCFA</span>
                     </div>
                     <div class="maintenance-fee-info" id="maintenance-fee-info">
-                        <span><i class="fas fa-calendar-alt"></i> Frais d'entretien mensuel: 500 FCFA</span>
+                        <span><i class="fas fa-calendar-alt"></i> Frais d'entretien mensuel: 200 FCFA</span>
                         <span class="fee-badge" id="fee-status-badge">Vérification...</span>
                     </div>
                 </div>
@@ -897,12 +935,12 @@
                         <div class="stats">
                             <div class="stat-card">
                                 <div class="stat-icon">📈</div>
-                                <div>Revenus</div>
+                                <div>Revenus (30j)</div>
                                 <div class="stat-value stat-income" id="month-income">0 FCFA</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-icon">📉</div>
-                                <div>Dépenses</div>
+                                <div>Dépenses (30j)</div>
                                 <div class="stat-value stat-expense" id="month-expense">0 FCFA</div>
                             </div>
                         </div>
@@ -930,7 +968,7 @@
                     </div>
                     
                     <div class="transactions">
-                        <h3 style="margin-bottom: 10px;">📋 Historique des transactions</h3>
+                        <h3 style="margin-bottom: 10px;">📋 Historique des transactions (30 derniers jours)</h3>
                         <ul class="transaction-list" id="transaction-list"></ul>
                     </div>
                     
@@ -1039,37 +1077,41 @@
     <footer>
         <div class="container">
             <p>Portefeuille MasterCard Togo &copy; 2025 - Paiements sécurisés par FedaPay</p>
-            <p style="font-size: 0.75rem; margin-top: 5px;">Frais d'entretien mensuel: 500 FCFA (prélevés automatiquement si solde > 500 FCFA)</p>
+            <p style="font-size: 0.75rem; margin-top: 5px;">Frais d'entretien mensuel: 200 FCFA (prélevés une fois par mois si solde > 200 FCFA)</p>
             <p style="font-size: 0.7rem;">Frais de recharge: 10% | Frais de retrait: 25%</p>
+            <p style="font-size: 0.7rem;">📊 Historique des transactions conservé 29 jours</p>
         </div>
     </footer>
 
     <script>
-        // Constantes
+        // ============================================
+        // CONSTANTES
+        // ============================================
         const FEDAPAY_PAYMENT_URL = "https://me.fedapay.com/lmuOo1Nv";
-        const MAINTENANCE_FEE = 500;
-        const MIN_BALANCE_FOR_FEE = 500;
+        const MAINTENANCE_FEE = 200; // Frais mensuels à 200 FCFA
+        const MIN_BALANCE_FOR_FEE = 200; // Minimum 200 FCFA pour prélever
         const RECHARGE_FEE_PERCENTAGE = 0.10;
         const WITHDRAWAL_FEE_PERCENTAGE = 0.25;
+        const TRANSACTION_RETENTION_DAYS = 29; // 29 jours de conservation
         
-        // Comptes enregistrés - SOLDE INITIAL À 1000 FCFA
+        // Comptes enregistrés - Le solde sera chargé depuis localStorage
         let currentUser = {
             id: 1,
             username: "KOLA",
             fullname: "KOLA Maniwah Essohouna",
             phone: "+228 93 38 75 95",
             email: "kola@example.com",
-            balance: 1000,
-            transactions: [
-                { id: 1, name: "Ouverture de compte", amount: 1000, date: new Date(2024, 2, 15), type: "income" }
-            ],
+            balance: 1000, // Solde temporaire, sera remplacé par le solde sauvegardé
+            transactions: [],
             feesHistory: [],
             lastMaintenanceFeeDate: null,
-            pendingRecharge: null
+            pendingRecharge: null,
+            lastCleanupDate: null
         };
         
         let isLoggedIn = false;
         let pendingPaymentAmount = null;
+        let autoSaveInterval = null;
         
         // Éléments DOM
         const loginContainer = document.getElementById('login-container');
@@ -1078,7 +1120,6 @@
         const loginError = document.getElementById('login-error');
         const logoutBtn = document.getElementById('logout-btn');
         const balanceText = document.getElementById('balance-text');
-        const balanceLoading = document.getElementById('balance-loading');
         const transactionList = document.getElementById('transaction-list');
         const saveNotification = document.getElementById('save-notification');
         const feesHistoryList = document.getElementById('fees-history-list');
@@ -1087,7 +1128,6 @@
         const userFullnameSpan = document.getElementById('user-fullname');
         const userAvatar = document.getElementById('user-avatar');
         const cardHolder = document.getElementById('card-holder');
-        const cardHolderGold = document.getElementById('card-holder-gold');
         const monthIncome = document.getElementById('month-income');
         const monthExpense = document.getElementById('month-expense');
         const soldeAchat = document.getElementById('solde-achat');
@@ -1097,21 +1137,101 @@
         const retraitFraisDisplay = document.getElementById('retrait-frais-display');
         const retraitTotalDisplay = document.getElementById('retrait-total-display');
         const retraitFeesInfo = document.getElementById('retrait-fees-info');
+        const autoSaveIndicator = document.getElementById('auto-save-indicator');
+        const lastSaveTimeSpan = document.getElementById('last-save-time');
         
-        // Initialisation
+        // ============================================
+        // INITIALISATION
+        // ============================================
         document.addEventListener('DOMContentLoaded', function() {
             loadData();
             setupEventListeners();
             checkForPendingPayment();
+            startAutoSave();
             if (isLoggedIn) {
                 showApp();
                 checkAndApplyMaintenanceFee();
+                runDailyCleanup();
             }
         });
+        
+        // ============================================
+        // SAUVEGARDE AUTOMATIQUE TOUTES LES 5 SECONDES
+        // ============================================
+        function startAutoSave() {
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+            }
+            autoSaveInterval = setInterval(function() {
+                if (isLoggedIn && currentUser) {
+                    saveData();
+                    if (autoSaveIndicator) {
+                        autoSaveIndicator.style.backgroundColor = '#4caf50';
+                        setTimeout(() => {
+                            if (autoSaveIndicator) autoSaveIndicator.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                        }, 500);
+                    }
+                    if (lastSaveTimeSpan) {
+                        const now = new Date();
+                        lastSaveTimeSpan.textContent = `Dernière sauvegarde: ${now.toLocaleTimeString('fr-FR')}`;
+                    }
+                }
+            }, 5000);
+        }
+        
+        function stopAutoSave() {
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+                autoSaveInterval = null;
+            }
+        }
+        
+        // ============================================
+        // NETTOYAGE DES ANCIENNES TRANSACTIONS (29 JOURS)
+        // ============================================
+        function runDailyCleanup() {
+            if (!currentUser) return;
+            
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            if (currentUser.lastCleanupDate) {
+                const lastCleanup = new Date(currentUser.lastCleanupDate);
+                if (lastCleanup.toDateString() === today.toDateString()) {
+                    return;
+                }
+            }
+            
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - TRANSACTION_RETENTION_DAYS);
+            
+            const newTransactions = currentUser.transactions.filter(t => new Date(t.date) >= cutoffDate);
+            
+            if (newTransactions.length !== currentUser.transactions.length) {
+                const deletedCount = currentUser.transactions.length - newTransactions.length;
+                currentUser.transactions = newTransactions;
+                currentUser.lastCleanupDate = now;
+                
+                updateUI();
+                saveData();
+                showNotif(`🗑️ ${deletedCount} ancienne(s) transaction(s) supprimée(s) (plus de ${TRANSACTION_RETENTION_DAYS} jours)`, 'info');
+            }
+        }
         
         function setupEventListeners() {
             loginForm.addEventListener('submit', handleLogin);
             logoutBtn.addEventListener('click', handleLogout);
+            
+            const passwordToggle = document.getElementById('password-toggle');
+            if (passwordToggle) {
+                passwordToggle.addEventListener('click', function() {
+                    const passwordInput = document.getElementById('password');
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    this.querySelector('i').classList.toggle('fa-eye');
+                    this.querySelector('i').classList.toggle('fa-eye-slash');
+                });
+            }
             
             document.querySelectorAll('.transaction-tab').forEach(tab => {
                 tab.addEventListener('click', function() {
@@ -1151,15 +1271,17 @@
             
             if (retraitMontant) retraitMontant.addEventListener('input', updateRetraitFees);
             
-            // Vérifier les frais toutes les heures
             setInterval(() => {
-                if (isLoggedIn) {
+                if (isLoggedIn && currentUser) {
                     checkAndApplyMaintenanceFee();
+                    runDailyCleanup();
                 }
             }, 3600000);
         }
         
-        // Gestion des frais d'entretien mensuels
+        // ============================================
+        // GESTION DES FRAIS D'ENTRETIEN MENSUELS (200 FCFA)
+        // ============================================
         function checkAndApplyMaintenanceFee() {
             if (!currentUser) return false;
             
@@ -1267,14 +1389,14 @@
                 return;
             }
             
-            currentUser.feesHistory.slice(0, 10).forEach(fee => {
+            currentUser.feesHistory.slice(0, 12).forEach(fee => {
                 const feeDate = new Date(fee.date);
                 const dateStr = feeDate.toLocaleDateString('fr-FR');
                 
                 const div = document.createElement('div');
                 div.className = 'fee-item';
                 div.innerHTML = `
-                    <span><i class="fas fa-receipt"></i> ${fee.type}</span>
+                    <span><i class="fas fa-receipt"></i> ${fee.type} - ${fee.month || ''}</span>
                     <span style="color: #d32f2f;">-${formatCurrency(fee.amount)}</span>
                     <span style="font-size: 0.7rem; color: #999;">${dateStr}</span>
                 `;
@@ -1293,6 +1415,7 @@
                 loginError.style.display = 'none';
                 saveData();
                 checkAndApplyMaintenanceFee();
+                runDailyCleanup();
             } else {
                 loginError.style.display = 'block';
             }
@@ -1306,12 +1429,14 @@
         
         function handleLogout() {
             isLoggedIn = false;
+            stopAutoSave();
             saveData();
             loginContainer.style.display = 'flex';
             appContainer.style.display = 'none';
             const loginFormElement = document.getElementById('login-form');
             if (loginFormElement) loginFormElement.reset();
             showNotif('Déconnexion réussie', 'info');
+            startAutoSave();
         }
         
         function updateUI() {
@@ -1321,13 +1446,11 @@
             if (userFullnameSpan) userFullnameSpan.textContent = currentUser.fullname;
             if (userAvatar) userAvatar.textContent = initials;
             if (balanceText) balanceText.textContent = formatCurrency(currentUser.balance);
-            if (balanceLoading) balanceLoading.style.display = 'none';
             if (soldeAchat) soldeAchat.textContent = formatCurrency(currentUser.balance);
             if (soldeRetrait) soldeRetrait.textContent = formatCurrency(currentUser.balance);
             
             const cardInitials = currentUser.fullname.split(' ').map(n => n[0]).join('').toUpperCase();
             if (cardHolder) cardHolder.textContent = cardInitials;
-            if (cardHolderGold) cardHolderGold.textContent = cardInitials;
             
             updateStatistics();
             renderTransactions();
@@ -1338,8 +1461,19 @@
         function renderTransactions() {
             if (!transactionList) return;
             transactionList.innerHTML = '';
-            const recent = [...currentUser.transactions].reverse().slice(0, 10);
-            recent.forEach(t => {
+            
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - TRANSACTION_RETENTION_DAYS);
+            
+            const recentTransactions = currentUser.transactions.filter(t => new Date(t.date) >= cutoffDate);
+            const displayTransactions = [...recentTransactions].reverse().slice(0, 20);
+            
+            if (displayTransactions.length === 0) {
+                transactionList.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">Aucune transaction récente</div>';
+                return;
+            }
+            
+            displayTransactions.forEach(t => {
                 const li = document.createElement('li');
                 li.className = 'transaction-item';
                 li.innerHTML = `
@@ -1358,13 +1492,13 @@
         function updateStatistics() {
             if (!monthIncome || !monthExpense) return;
             
-            const now = new Date();
-            const monthTransactions = currentUser.transactions.filter(t => {
-                const d = new Date(t.date);
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            });
-            const income = monthTransactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
-            const expense = monthTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - TRANSACTION_RETENTION_DAYS);
+            
+            const recentTransactions = currentUser.transactions.filter(t => new Date(t.date) >= cutoffDate);
+            const income = recentTransactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+            const expense = recentTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+            
             monthIncome.textContent = formatCurrency(income);
             monthExpense.textContent = formatCurrency(expense);
         }
@@ -1611,18 +1745,53 @@
         }
         
         function saveData() {
-            localStorage.setItem('mastercardUser', JSON.stringify(currentUser));
+            if (currentUser) {
+                const dataToSave = {
+                    id: currentUser.id,
+                    username: currentUser.username,
+                    fullname: currentUser.fullname,
+                    phone: currentUser.phone,
+                    email: currentUser.email,
+                    balance: currentUser.balance,
+                    transactions: currentUser.transactions,
+                    feesHistory: currentUser.feesHistory,
+                    lastMaintenanceFeeDate: currentUser.lastMaintenanceFeeDate,
+                    pendingRecharge: currentUser.pendingRecharge,
+                    lastCleanupDate: currentUser.lastCleanupDate
+                };
+                localStorage.setItem('mastercardUser', JSON.stringify(dataToSave));
+                localStorage.setItem('balance_mastercard', currentUser.balance);
+                localStorage.setItem('lastUpdate_mastercard', new Date().toISOString());
+            }
             localStorage.setItem('isLoggedIn', isLoggedIn);
         }
         
         function loadData() {
             const saved = localStorage.getItem('mastercardUser');
+            const savedBalance = localStorage.getItem('balance_mastercard');
+            const isLoggedInSaved = localStorage.getItem('isLoggedIn') === 'true';
+            
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
                     currentUser = data;
-                    isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-                } catch(e) {}
+                    isLoggedIn = isLoggedInSaved;
+                    
+                    // Charger le solde sauvegardé (priorité au solde récemment sauvegardé)
+                    if (savedBalance !== null) {
+                        currentUser.balance = parseInt(savedBalance);
+                        showNotif(`💰 Solde chargé: ${formatCurrency(currentUser.balance)}`, 'success');
+                    }
+                    
+                    // S'assurer que les transactions et l'historique existent
+                    if (!currentUser.transactions) currentUser.transactions = [];
+                    if (!currentUser.feesHistory) currentUser.feesHistory = [];
+                    if (!currentUser.lastCleanupDate) currentUser.lastCleanupDate = null;
+                    if (!currentUser.lastMaintenanceFeeDate) currentUser.lastMaintenanceFeeDate = null;
+                    
+                } catch(e) {
+                    console.error("Erreur lors du chargement:", e);
+                }
             }
         }
     </script>
