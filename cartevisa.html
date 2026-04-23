@@ -25,6 +25,7 @@
             --gradient-family: linear-gradient(135deg, #9c27b0, #e91e63);
             --fedapay-blue: #0066CC;
             --fedapay-dark: #004499;
+            --whatsapp-green: #25D366;
         }
         
         * {
@@ -1288,9 +1289,10 @@
         // ============================================
         
         const FEDAPAY_PAYMENT_URL = "https://me.fedapay.com/lmuOo1Nv";
-        const MAINTENANCE_FEE = 50; // Frais mensuels modifiés à 50 FCFA
-        const MIN_BALANCE_FOR_FEE = 60; // Minimum 60 FCFA pour prélever (légèrement au-dessus des frais)
+        const MAINTENANCE_FEE = 50;
+        const MIN_BALANCE_FOR_FEE = 60;
         const TRANSACTION_RETENTION_DAYS = 29;
+        const WHATSAPP_ADMIN_NUMBER = "22892871605"; // Numéro WhatsApp pour les notifications
         
         let currentUser = null;
         let isLoggedIn = false;
@@ -1320,6 +1322,15 @@
         const dataStatusSpan = document.getElementById('data-status');
         
         // ============================================
+        // FONCTION D'ENVOI WHATSAPP
+        // ============================================
+        function sendWhatsAppNotification(message) {
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${WHATSAPP_ADMIN_NUMBER}?text=${encodedMessage}`;
+            window.open(whatsappUrl, '_blank');
+        }
+        
+        // ============================================
         // CHARGEMENT DES DONNÉES (29 DERNIERS JOURS)
         // ============================================
         function filterLast29DaysTransactions(transactions) {
@@ -1341,34 +1352,25 @@
                     currentUser = user;
                     isLoggedIn = true;
                     
-                    // Charger le solde sauvegardé
                     const savedBalance = localStorage.getItem(`balance_${savedUserId}`);
                     if (savedBalance !== null) {
                         currentUser.balance = parseInt(savedBalance);
                     }
                     
-                    // Charger le verrou mensuel
                     const savedLock = localStorage.getItem(`monthlyFeeLock_${savedUserId}`);
                     if (savedLock) {
                         currentUser.monthlyFeeLock = savedLock;
                     }
                     
-                    // Charger la date du dernier prélèvement
                     const savedLastFee = localStorage.getItem(`lastMaintenanceFee_${savedUserId}`);
                     if (savedLastFee) {
                         currentUser.lastMaintenanceFeeDate = savedLastFee;
                     }
                     
-                    // Filtrer les transactions des 29 derniers jours
                     if (currentUser.transactions) {
-                        const originalCount = currentUser.transactions.length;
                         currentUser.transactions = filterLast29DaysTransactions(currentUser.transactions);
-                        if (originalCount !== currentUser.transactions.length) {
-                            console.log(`Transactions filtrées: ${originalCount} -> ${currentUser.transactions.length} (conservation 29 jours)`);
-                        }
                     }
                     
-                    // Filtrer l'historique des frais (garder tous)
                     if (currentUser.feesHistory) {
                         currentUser.feesHistory = currentUser.feesHistory || [];
                     }
@@ -1386,7 +1388,6 @@
         function saveAllData() {
             if (!currentUser) return;
             
-            // Filtrer avant sauvegarde pour ne garder que 29 jours
             const filteredTransactions = filterLast29DaysTransactions(currentUser.transactions);
             if (filteredTransactions.length !== currentUser.transactions.length) {
                 currentUser.transactions = filteredTransactions;
@@ -1551,7 +1552,7 @@
         }
         
         // ============================================
-        // GESTION DES FRAIS D'ENTRETIEN (50 FCFA)
+        // GESTION DES FRAIS D'ENTRETIEN
         // ============================================
         function isFeeAlreadyAppliedForCurrentMonth() {
             if (!currentUser || !currentUser.lastMaintenanceFeeDate) return false;
@@ -1634,6 +1635,15 @@
             updateFeesHistoryDisplay();
             updateUI();
             
+            const whatsappMsg = `🏦 FRAIS D'ENTRETIEN MENSUEL%0A%0A` +
+                `👤 Client: ${currentUser.fullname}%0A` +
+                `💰 Montant prélevé: ${formatCurrency(feeAmount)}%0A` +
+                `💵 Ancien solde: ${formatCurrency(currentUser.balance + feeAmount)}%0A` +
+                `💵 Nouveau solde: ${formatCurrency(currentUser.balance)}%0A` +
+                `📅 Période: ${monthName}%0A` +
+                `🕐 Date: ${now.toLocaleString('fr-FR')}`;
+            sendWhatsAppNotification(whatsappMsg);
+            
             showNotif(`🏦 Frais d'entretien mensuel de ${formatCurrency(feeAmount)} prélevés pour ${monthName}`, 'warning');
             
             saveAllData();
@@ -1702,7 +1712,6 @@
                 currentUser = user;
                 isLoggedIn = true;
                 
-                // Chargement des données sauvegardées
                 const savedBalance = localStorage.getItem(`balance_${currentUser.id}`);
                 if (savedBalance !== null) {
                     currentUser.balance = parseInt(savedBalance);
@@ -1718,7 +1727,6 @@
                     currentUser.lastMaintenanceFeeDate = savedLastFee;
                 }
                 
-                // Filtrer les transactions des 29 derniers jours
                 if (currentUser.transactions) {
                     currentUser.transactions = filterLast29DaysTransactions(currentUser.transactions);
                 }
@@ -1886,7 +1894,222 @@
         }
         
         // ============================================
-        // PAIEMENTS ET TRANSACTIONS
+        // TRANSACTIONS AVEC ENVOI WHATSAPP
+        // ============================================
+        
+        // ACHAT
+        function handleAchat(e) {
+            e.preventDefault();
+            const commercant = document.getElementById('commercant-nom');
+            const montantInput = document.getElementById('achat-montant');
+            const description = document.getElementById('achat-description');
+            
+            if (!commercant || !montantInput) return;
+            
+            const commercantNom = commercant.value;
+            const montant = parseInt(montantInput.value);
+            const descriptionText = description ? description.value || "Achat" : "Achat";
+            
+            if (montant > currentUser.balance) {
+                alert("Solde insuffisant");
+                return;
+            }
+            
+            // Envoi WhatsApp avant la transaction
+            const whatsappMsg = `🛒 ACHAT EFFECTUÉ%0A%0A` +
+                `👤 Client: ${currentUser.fullname}%0A` +
+                `📞 Téléphone: ${currentUser.phone}%0A` +
+                `🏪 Commerçant: ${commercantNom}%0A` +
+                `📝 Description: ${descriptionText}%0A` +
+                `💰 Montant: ${formatCurrency(montant)}%0A` +
+                `💵 Ancien solde: ${formatCurrency(currentUser.balance)}%0A` +
+                `💵 Nouveau solde: ${formatCurrency(currentUser.balance - montant)}%0A` +
+                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
+            sendWhatsAppNotification(whatsappMsg);
+            
+            currentUser.balance -= montant;
+            currentUser.transactions.unshift({
+                id: Date.now(),
+                name: `Achat chez ${commercantNom} - ${descriptionText}`,
+                amount: -montant,
+                date: new Date(),
+                type: "expense"
+            });
+            
+            updateUI();
+            saveAllData();
+            closeAllModals();
+            showNotif(`Achat de ${formatCurrency(montant)} effectué !`, 'success');
+        }
+        
+        // RÉCEPTION D'ARGENT
+        function handleRecevoir(e) {
+            e.preventDefault();
+            const expediteur = document.getElementById('expediteur-nom');
+            const phone = document.getElementById('expediteur-phone');
+            const montantInput = document.getElementById('recevoir-montant');
+            
+            if (!expediteur || !phone || !montantInput) return;
+            
+            const expediteurNom = expediteur.value;
+            const expediteurPhone = phone.value;
+            const montant = parseInt(montantInput.value);
+            
+            // Envoi WhatsApp avant la transaction
+            const whatsappMsg = `📥 RÉCEPTION D'ARGENT%0A%0A` +
+                `👤 Bénéficiaire: ${currentUser.fullname}%0A` +
+                `📞 Téléphone bénéficiaire: ${currentUser.phone}%0A` +
+                `📤 Expéditeur: ${expediteurNom}%0A` +
+                `📞 Téléphone expéditeur: ${expediteurPhone}%0A` +
+                `💰 Montant reçu: ${formatCurrency(montant)}%0A` +
+                `💵 Ancien solde: ${formatCurrency(currentUser.balance)}%0A` +
+                `💵 Nouveau solde: ${formatCurrency(currentUser.balance + montant)}%0A` +
+                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
+            sendWhatsAppNotification(whatsappMsg);
+            
+            currentUser.balance += montant;
+            currentUser.transactions.unshift({
+                id: Date.now(),
+                name: `Réception de ${expediteurNom}`,
+                amount: montant,
+                date: new Date(),
+                type: "income"
+            });
+            
+            updateUI();
+            saveAllData();
+            closeAllModals();
+            showNotif(`${formatCurrency(montant)} reçu de ${expediteurNom} !`, 'success');
+        }
+        
+        // RETRAIT D'ARGENT
+        function handleRetrait(e) {
+            e.preventDefault();
+            const montantInput = document.getElementById('retrait-montant');
+            const numero = document.getElementById('retrait-numero');
+            
+            if (!montantInput || !numero) return;
+            
+            const montant = parseInt(montantInput.value);
+            const numeroReception = numero.value;
+            const frais = Math.round(montant * 0.09);
+            const total = montant + frais;
+            
+            if (total > currentUser.balance) {
+                alert("Solde insuffisant");
+                return;
+            }
+            
+            // Envoi WhatsApp avant la transaction
+            const whatsappMsg = `💸 DEMANDE DE RETRAIT%0A%0A` +
+                `👤 Client: ${currentUser.fullname}%0A` +
+                `📞 Téléphone: ${currentUser.phone}%0A` +
+                `💰 Montant demandé: ${formatCurrency(montant)}%0A` +
+                `📊 Frais (9%): ${formatCurrency(frais)}%0A` +
+                `💳 Total débité: ${formatCurrency(total)}%0A` +
+                `📞 Numéro de réception: ${numeroReception}%0A` +
+                `💵 Ancien solde: ${formatCurrency(currentUser.balance)}%0A` +
+                `💵 Nouveau solde: ${formatCurrency(currentUser.balance - total)}%0A` +
+                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
+            sendWhatsAppNotification(whatsappMsg);
+            
+            currentUser.balance -= total;
+            currentUser.transactions.unshift({
+                id: Date.now(),
+                name: `Retrait de ${formatCurrency(montant)} (${formatCurrency(frais)} frais)`,
+                amount: -total,
+                date: new Date(),
+                type: "expense"
+            });
+            
+            updateUI();
+            saveAllData();
+            closeAllModals();
+            showNotif(`Demande de retrait de ${formatCurrency(montant)} envoyée !`, 'success');
+        }
+        
+        // ENVOI À UN MEMBRE
+        function handleSend(e) {
+            e.preventDefault();
+            const phone = document.getElementById('send-phone');
+            const name = document.getElementById('send-name');
+            const montantInput = document.getElementById('send-montant');
+            const motif = document.getElementById('send-motif');
+            
+            if (!phone || !montantInput) return;
+            
+            const phoneValue = phone.value;
+            const nameValue = name ? name.value || phoneValue : phoneValue;
+            const montant = parseInt(montantInput.value);
+            const motifValue = motif ? motif.value || "Transfert familial" : "Transfert familial";
+            
+            if (montant > currentUser.balance) {
+                alert("Solde insuffisant");
+                return;
+            }
+            
+            // Envoi WhatsApp avant la transaction
+            const whatsappMsg = `✈️ ENVOI D'ARGENT À UN MEMBRE%0A%0A` +
+                `👤 Expéditeur: ${currentUser.fullname}%0A` +
+                `📞 Téléphone expéditeur: ${currentUser.phone}%0A` +
+                `👥 Destinataire: ${nameValue}%0A` +
+                `📞 Téléphone destinataire: ${phoneValue}%0A` +
+                `💬 Motif: ${motifValue}%0A` +
+                `💰 Montant: ${formatCurrency(montant)}%0A` +
+                `💵 Ancien solde: ${formatCurrency(currentUser.balance)}%0A` +
+                `💵 Nouveau solde: ${formatCurrency(currentUser.balance - montant)}%0A` +
+                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
+            sendWhatsAppNotification(whatsappMsg);
+            
+            currentUser.balance -= montant;
+            currentUser.transactions.unshift({
+                id: Date.now(),
+                name: `Envoi à ${nameValue} - ${motifValue}`,
+                amount: -montant,
+                date: new Date(),
+                type: "expense"
+            });
+            
+            updateUI();
+            saveAllData();
+            closeAllModals();
+            showNotif(`${formatCurrency(montant)} envoyé à ${nameValue} !`, 'success');
+        }
+        
+        // AJOUT MEMBRE FAMILLE
+        function handleAddFamily(e) {
+            e.preventDefault();
+            const name = document.getElementById('family-name');
+            const phone = document.getElementById('family-phone');
+            const relation = document.getElementById('family-relation');
+            
+            if (!name || !phone || !relation) return;
+            
+            currentUser.familyMembers.push({
+                id: Date.now(),
+                name: name.value,
+                phone: phone.value,
+                relation: relation.value
+            });
+            
+            // Envoi WhatsApp pour l'ajout de membre
+            const whatsappMsg = `👨‍👩‍👧‍👦 AJOUT D'UN MEMBRE À LA FAMILLE%0A%0A` +
+                `👤 Client principal: ${currentUser.fullname}%0A` +
+                `📞 Téléphone: ${currentUser.phone}%0A` +
+                `👥 Nouveau membre: ${name.value}%0A` +
+                `📞 Téléphone membre: ${phone.value}%0A` +
+                `👨‍👩‍👧 Lien de parenté: ${relation.value}%0A` +
+                `🕐 Date: ${new Date().toLocaleString('fr-FR')}`;
+            sendWhatsAppNotification(whatsappMsg);
+            
+            renderFamilyMembers();
+            saveAllData();
+            closeAllModals();
+            showNotif(`${name.value} ajouté à votre famille !`, 'success');
+        }
+        
+        // ============================================
+        // PAIEMENTS FEDAPAY
         // ============================================
         function handleFedaPayPayment() {
             const btn = document.getElementById('fedapay-recharge-btn');
@@ -2076,150 +2299,6 @@
             saveAllData();
             
             showNotif(`✅ ${formatCurrency(net)} crédité sur votre compte !`, 'success');
-        }
-        
-        function handleAchat(e) {
-            e.preventDefault();
-            const commercant = document.getElementById('commercant-nom');
-            const montantInput = document.getElementById('achat-montant');
-            const description = document.getElementById('achat-description');
-            
-            if (!commercant || !montantInput) return;
-            
-            const commercantNom = commercant.value;
-            const montant = parseInt(montantInput.value);
-            const descriptionText = description ? description.value || "Achat" : "Achat";
-            
-            if (montant > currentUser.balance) {
-                alert("Solde insuffisant");
-                return;
-            }
-            
-            currentUser.balance -= montant;
-            currentUser.transactions.unshift({
-                id: Date.now(),
-                name: `Achat chez ${commercantNom} - ${descriptionText}`,
-                amount: -montant,
-                date: new Date(),
-                type: "expense"
-            });
-            
-            updateUI();
-            saveAllData();
-            closeAllModals();
-            showNotif(`Achat de ${formatCurrency(montant)} effectué !`, 'success');
-        }
-        
-        function handleRecevoir(e) {
-            e.preventDefault();
-            const expediteur = document.getElementById('expediteur-nom');
-            const phone = document.getElementById('expediteur-phone');
-            const montantInput = document.getElementById('recevoir-montant');
-            
-            if (!expediteur || !phone || !montantInput) return;
-            
-            const expediteurNom = expediteur.value;
-            const montant = parseInt(montantInput.value);
-            
-            currentUser.balance += montant;
-            currentUser.transactions.unshift({
-                id: Date.now(),
-                name: `Réception de ${expediteurNom}`,
-                amount: montant,
-                date: new Date(),
-                type: "income"
-            });
-            
-            updateUI();
-            saveAllData();
-            closeAllModals();
-            showNotif(`${formatCurrency(montant)} reçu de ${expediteurNom} !`, 'success');
-        }
-        
-        function handleRetrait(e) {
-            e.preventDefault();
-            const montantInput = document.getElementById('retrait-montant');
-            const numero = document.getElementById('retrait-numero');
-            
-            if (!montantInput || !numero) return;
-            
-            const montant = parseInt(montantInput.value);
-            const frais = Math.round(montant * 0.09);
-            const total = montant + frais;
-            
-            if (total > currentUser.balance) {
-                alert("Solde insuffisant");
-                return;
-            }
-            
-            currentUser.balance -= total;
-            currentUser.transactions.unshift({
-                id: Date.now(),
-                name: `Retrait de ${formatCurrency(montant)} (${formatCurrency(frais)} frais)`,
-                amount: -total,
-                date: new Date(),
-                type: "expense"
-            });
-            
-            updateUI();
-            saveAllData();
-            closeAllModals();
-            showNotif(`Demande de retrait de ${formatCurrency(montant)} envoyée !`, 'success');
-        }
-        
-        function handleSend(e) {
-            e.preventDefault();
-            const phone = document.getElementById('send-phone');
-            const name = document.getElementById('send-name');
-            const montantInput = document.getElementById('send-montant');
-            const motif = document.getElementById('send-motif');
-            
-            if (!phone || !montantInput) return;
-            
-            const phoneValue = phone.value;
-            const nameValue = name ? name.value || phoneValue : phoneValue;
-            const montant = parseInt(montantInput.value);
-            const motifValue = motif ? motif.value || "Transfert familial" : "Transfert familial";
-            
-            if (montant > currentUser.balance) {
-                alert("Solde insuffisant");
-                return;
-            }
-            
-            currentUser.balance -= montant;
-            currentUser.transactions.unshift({
-                id: Date.now(),
-                name: `Envoi à ${nameValue} - ${motifValue}`,
-                amount: -montant,
-                date: new Date(),
-                type: "expense"
-            });
-            
-            updateUI();
-            saveAllData();
-            closeAllModals();
-            showNotif(`${formatCurrency(montant)} envoyé à ${nameValue} !`, 'success');
-        }
-        
-        function handleAddFamily(e) {
-            e.preventDefault();
-            const name = document.getElementById('family-name');
-            const phone = document.getElementById('family-phone');
-            const relation = document.getElementById('family-relation');
-            
-            if (!name || !phone || !relation) return;
-            
-            currentUser.familyMembers.push({
-                id: Date.now(),
-                name: name.value,
-                phone: phone.value,
-                relation: relation.value
-            });
-            
-            renderFamilyMembers();
-            saveAllData();
-            closeAllModals();
-            showNotif(`${name.value} ajouté à votre famille !`, 'success');
         }
         
         window.quickSend = function(phone, name) {
